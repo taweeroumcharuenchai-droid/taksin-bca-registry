@@ -5,7 +5,7 @@
 // ============================================================
 
 // ── Configuration ────────────────────────────────────────────
-let APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDD0j2g_55_IoB6Huy4-JSzLgXYgiKg7cgA27gT2cXoPUqZMLTJbz6h_GxLGbO3jWb/exec';
+let APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxz_t0tUCWwYsaSr0KnQNgO6kDOShQkTZCpB53ElRYD7_4oxsfGxIdRVKbXo5Fkiro/exec';
 const STORAGE_KEY   = 'bca_registry_taksin_v1';
 
 // ── App state (shared with index.html) ───────────────────────
