@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Breast Cancer Registry — Taksin Hospital</title>
+<title>BCA Registry — Taksin Hospital</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -659,8 +659,8 @@
   </div>
   <div class="header-spacer"></div>
   <button class="btn-new" onclick="newRecord()">+ ผู้ป่วยใหม่</button>
-  <span id="storage-badge" class="storage-badge storage-warn" title="สถานะการบันทึกข้อมูล">⬤ ตรวจสอบ…</span>
-  <button class="btn-new" onclick="setupURL()" title="ตั้งค่า Apps Script URL" style="font-size:11px;padding:6px 12px">⚙️ URL</button>
+  <span id="storage-badge" class="storage-badge storage-warn" title="สถานะการเชื่อมต่อ Google Sheets">⚙️ ยังไม่ได้เชื่อมต่อ</span>
+  <button class="btn-new" onclick="setupURL()" title="ตั้งค่า URL และรหัสผ่านของ Google Sheets (ทำครั้งเดียวต่อเครื่อง)" style="font-size:11px;padding:6px 12px">⚙️ เชื่อมต่อ</button>
   <button class="btn-new" onclick="syncNow()" title="ดึงข้อมูลล่าสุดจาก Google Sheets" style="font-size:11px;padding:6px 12px">↻ Sync</button>
   <button class="btn-new" onclick="backupJSON()" title="สำรองข้อมูลเป็น JSON file" style="font-size:12px">💾 Backup</button>
   <label class="btn-new" title="นำเข้าข้อมูลจาก JSON backup" style="font-size:12px;cursor:pointer">
@@ -703,40 +703,91 @@
 
     <!-- Tab navigation -->
     <nav class="section-tabs">
-      <button class="tab-btn active" onclick="switchTab(0)" id="tab0">
+      <button class="tab-btn active" onclick="switchTab(0);renderDashboard()" id="tab0">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        📊 Dashboard
+      </button>
+      <button class="tab-btn" onclick="switchTab(1)" id="tab1">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
         ข้อมูลผู้ป่วย
       </button>
-      <button class="tab-btn" onclick="switchTab(1)" id="tab1">
+      <button class="tab-btn" onclick="switchTab(2)" id="tab2">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
         อาการและประวัติ
       </button>
-      <button class="tab-btn" onclick="switchTab(2)" id="tab2">
+      <button class="tab-btn" onclick="switchTab(3)" id="tab3">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
         Investigation
       </button>
-      <button class="tab-btn" onclick="switchTab(3)" id="tab3">
+      <button class="tab-btn" onclick="switchTab(4)" id="tab4">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         Treatment
       </button>
-      <button class="tab-btn" onclick="switchTab(4)" id="tab4">
+      <button class="tab-btn" onclick="switchTab(5)" id="tab5">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         Diagnosis & Staging
       </button>
-      <button class="tab-btn" onclick="switchTab(5)" id="tab5">
+      <button class="tab-btn" onclick="switchTab(6)" id="tab6">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Survival & Outcome
-      </button>
-      <button class="tab-btn" onclick="switchTab(6);renderDashboard()" id="tab6">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        📊 Dashboard
       </button>
     </nav>
 
     <!-- ══════════════════════════════════════════ -->
     <!-- TAB 0: ข้อมูลผู้ป่วย -->
     <!-- ══════════════════════════════════════════ -->
+
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- TAB 0: Dashboard -->
+    <!-- ══════════════════════════════════════════ -->
     <div class="tab-panel active" id="panel0">
+      <h2 class="section-title">📊 Department Dashboard</h2>
+      <p class="section-subtitle">ภาพรวมผู้ป่วยและ KPI แผนก — NCI FY2569 · อัปเดตอัตโนมัติเมื่อเปิด tab</p>
+
+      <!-- Summary cards row -->
+      <div id="dash_cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px"></div>
+
+      <!-- KPI Section -->
+      <div class="subsection" style="border-left:3px solid var(--teal);margin-bottom:20px">
+        <div class="subsection-title">🎯 KPI — NCI FY2569</div>
+        <div id="dash_kpi"></div>
+      </div>
+
+      <!-- Stage distribution -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+        <div class="subsection" style="border-left:3px solid var(--gold)">
+          <div class="subsection-title">📐 Stage Distribution</div>
+          <div id="dash_stage"></div>
+        </div>
+        <div class="subsection" style="border-left:3px solid #a78bfa">
+          <div class="subsection-title">🧬 Molecular Subtype</div>
+          <div id="dash_subtype"></div>
+        </div>
+      </div>
+
+      <!-- Demographics row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+        <div class="subsection" style="border-left:3px solid #60a5fa">
+          <div class="subsection-title">👩 Age Distribution</div>
+          <div id="dash_age"></div>
+        </div>
+        <div class="subsection" style="border-left:3px solid #34d399">
+          <div class="subsection-title">📅 Cases per Year</div>
+          <div id="dash_year"></div>
+        </div>
+      </div>
+
+      <!-- Waiting time detail -->
+      <div class="subsection" style="border-left:3px solid var(--accent);margin-bottom:20px">
+        <div class="subsection-title">⏱ Waiting Time Detail (median & range)</div>
+        <div id="dash_wait"></div>
+      </div>
+
+      <div style="font-size:11px;color:var(--text3);text-align:right;margin-top:8px" id="dash_updated"></div>
+    </div><!-- end panel0 -->
+
+    <div class="tab-panel" id="panel1">
       <h2 class="section-title">ข้อมูลพื้นฐานผู้ป่วย</h2>
       <p class="section-subtitle">Patient demographics and identification</p>
 
@@ -831,7 +882,7 @@
     <!-- ══════════════════════════════════════════ -->
     <!-- TAB 1: อาการและประวัติ -->
     <!-- ══════════════════════════════════════════ -->
-    <div class="tab-panel" id="panel1">
+    <div class="tab-panel" id="panel2">
       <h2 class="section-title">อาการและประวัติโรค</h2>
       <p class="section-subtitle">Presentation, history & physical examination</p>
 
@@ -1190,7 +1241,7 @@
     <!-- ══════════════════════════════════════════ -->
     <!-- TAB 3: Investigation -->
     <!-- ══════════════════════════════════════════ -->
-    <div class="tab-panel" id="panel2">
+    <div class="tab-panel" id="panel3">
       <h2 class="section-title">Investigation & Results</h2>
       <p class="section-subtitle">Imaging → Pathological work-up → Metastasis work-up → Laboratory</p>
 
@@ -1669,24 +1720,12 @@
       </div>
 
       <div class="subsection">
-        <div class="subsection-title">Tumor Markers</div>
-        <div class="lab-grid">
-          <div class="lab-item">
-            <div class="lab-name">CA 15-3</div>
-            <input type="text" id="lab_ca153" placeholder="—" oninput="markDirty()">
-            <div class="lab-unit">U/mL</div>
-          </div>
-          <div class="lab-item">
-            <div class="lab-name">CEA</div>
-            <input type="text" id="lab_cea" placeholder="—" oninput="markDirty()">
-            <div class="lab-unit">ng/mL</div>
-          </div>
-          <div class="lab-item">
-            <div class="lab-name">CA 27.29</div>
-            <input type="text" id="lab_ca2729" placeholder="—" oninput="markDirty()">
-            <div class="lab-unit">U/mL</div>
-          </div>
+        <div class="subsection-title">Tumor Markers — ติดตามผล (Follow-up)</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5">
+          ASCO: CA 15-3 / CA 27.29 / CEA ใช้เป็นข้อมูลเสริมในการติดตามโรคระยะแพร่กระจาย ร่วมกับภาพถ่ายรังสีและอาการทางคลินิก
+          — ไม่แนะนำตรวจเป็นประจำหลังรักษาหายขาด · CA 125 ไม่ใช่ marker มาตรฐานของมะเร็งเต้านม (เก็บไว้เป็นทางเลือก)
         </div>
+        <div id="tm-container"></div>
       </div>
 
     </div><!-- end panel3 -->
@@ -1694,7 +1733,7 @@
     <!-- ══════════════════════════════════════════ -->
     <!-- TAB 4: Treatment -->
     <!-- ══════════════════════════════════════════ -->
-    <div class="tab-panel" id="panel3">
+    <div class="tab-panel" id="panel4">
       <h2 class="section-title">Treatment</h2>
       <p class="section-subtitle">Systemic and locoregional treatment</p>
 
@@ -2448,98 +2487,44 @@
         <div class="treatment-block-title">💊 Systemic Treatment</div>
         <div class="subsection">
 
-          <!-- Chemotherapy -->
-          <div class="form-grid g3">
-            <div class="field">
-              <label>Chemotherapy</label>
-              <div class="radio-group">
-                <label><input type="radio" name="chemo" value="yes" onchange="markDirty()"> Yes</label>
-                <label><input type="radio" name="chemo" value="no" onchange="markDirty()"> No</label>
-                <label><input type="radio" name="chemo" value="deny" onchange="markDirty()"> ปฏิเสธ</label>
-              </div>
+          <!-- ══════════════════════════════════════════════════════
+               CHEMOTHERAPY — Multi-session panels
+     ══════════════════════════════════════════════════════ -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">
+              💊 Chemotherapy Sessions
             </div>
-            <div class="field">
-              <label>Aim</label>
-              <select id="chemo_aim" onchange="markDirty()">
-                <option value="">—</option>
-                <option value="Neoadjuvant (NAC)">Neoadjuvant (NAC)</option>
-                <option value="Adjuvant">Adjuvant</option>
-                <option value="Palliative">Palliative</option>
-                <option value="Deny treatment">Deny treatment</option>
-                <option value="Refer">Refer</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Date CMT 1st cycle</label>
-              <input type="text" id="date_cmt" class="date-input" placeholder="วว/ดด/พ.ศ." maxlength="10" autocomplete="off" oninput="onThaiDateInput(this, ()=>{ calcWaitingTimes() })">
-            </div>
-          </div>
-          <div class="form-grid g2" style="margin-top:12px">
-            <div class="field">
-              <label>Regimen</label>
-              <select id="chemo_regimen" onchange="markDirty()">
-                <option value="">—</option>
-                <option>4AC → 4T (AC-T)</option>
-                <option>4AC → 4T + Herceptin (AC-TH)</option>
-                <option>4AC → 4T + Herceptin + Pertuzumab</option>
-                <option>4AC → 12 weekly Pac</option>
-                <option>4TC (Docetaxel + Cyclophosphamide)</option>
-                <option>ddAC-T</option>
-                <option>CMF</option>
-                <option>Capecitabine</option>
-                <option>อื่นๆ (ระบุในหมายเหตุ)</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>CMT ≤6wk post-op (KPI)</label>
-              <input type="text" id="kpi_cmt6wk" class="auto" readonly placeholder="—">
-            </div>
-            <div class="field">
-              <label>Memo</label>
-              <input type="text" id="chemo_memo" placeholder="หมายเหตุ / additional info..." oninput="markDirty()">
+            <div style="display:flex;gap:8px;align-items:center">
+              <span style="font-size:11px;color:var(--text3)">CMT ≤42 วัน หลังผ่าตัด (KPI 6.2):</span>
+              <input type="text" id="kpi_cmt6wk" class="auto" readonly placeholder="—"
+                     style="width:200px;font-size:11px;padding:3px 7px">
             </div>
           </div>
 
-          <!-- Anti-HER2 -->
-          <div class="form-grid g3" style="margin-top:20px">
-            <div class="field">
-              <label>Anti-HER2 therapy</label>
-              <div class="radio-group">
-                <label><input type="radio" name="antiher2" value="yes" onchange="markDirty()"> Yes</label>
-                <label><input type="radio" name="antiher2" value="no" onchange="markDirty()"> No</label>
-              </div>
+          <!-- CMT session panels container -->
+          <div id="cmt-sessions-container"></div>
+
+          <button type="button" onclick="addCmtSession()"
+                  style="margin-top:10px;padding:6px 16px;background:var(--teal);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:600">
+            + เพิ่ม CMT Session
+          </button>
+
+          <!-- ══════════════════════════════════════════════════════
+               ANTI-HER2 THERAPY — Multi-session panels
+          ══════════════════════════════════════════════════════ -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:22px;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em">
+              🎯 Anti-HER2 Therapy Sessions
             </div>
-            <div class="field">
-              <label>Agent</label>
-              <select id="her2_agent" onchange="markDirty()">
-                <option value="">—</option>
-                <option>Trastuzumab (Herceptin) 12 mo</option>
-                <option>Pertuzumab + Trastuzumab</option>
-                <option>T-DM1 (Kadcyla)</option>
-                <option>Neratinib</option>
-                <option>Lapatinib</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Date start anti-HER2</label>
-              <input type="text" id="date_her2" class="date-input" placeholder="วว/ดด/พ.ศ." maxlength="10" autocomplete="off" oninput="onThaiDateInput(this, ()=>{ markDirty() })">
-            </div>
-              <div class="field">
-                <label>Treatment aim</label>
-                <select id="antiher2_aim" onchange="markDirty()">
-                  <option value="">—</option>
-                  <option value="Neoadjuvant">Neoadjuvant</option>
-                <option value="Adjuvant">Adjuvant</option>
-                <option value="Palliative">Palliative</option>
-                <option value="Deny treatment">Deny treatment</option>
-                <option value="Refer">Refer</option>
-                </select>
-              </div>
-              <div class="field">
-                <label>Memo</label>
-                <input type="text" id="antiher2_memo" placeholder="หมายเหตุ / additional info..." oninput="markDirty()">
-              </div>
           </div>
+
+          <!-- Anti-HER2 session panels container -->
+          <div id="her2-sessions-container"></div>
+
+          <button type="button" onclick="addHer2Session()"
+                  style="margin-top:10px;padding:6px 16px;background:var(--teal);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:600">
+            + เพิ่ม Anti-HER2 Session
+          </button>
 
           <!-- Endocrine -->
           <div class="form-grid g3" style="margin-top:20px">
@@ -2927,7 +2912,7 @@
     <!-- ══════════════════════════════════════════ -->
     <!-- TAB 2: Diagnosis & Staging -->
     <!-- ══════════════════════════════════════════ -->
-    <div class="tab-panel" id="panel4">
+    <div class="tab-panel" id="panel5">
       <h2 class="section-title">Diagnosis & Staging</h2>
       <p class="section-subtitle">ข้อมูลดึงมาจาก Investigation tab — แก้ไขหรือยืนยันที่นี่</p>
 
@@ -3546,7 +3531,7 @@
     <!-- ══════════════════════════════════════════ -->
     <!-- TAB 5: Survival & Outcome -->
     <!-- ══════════════════════════════════════════ -->
-    <div class="tab-panel" id="panel5">
+    <div class="tab-panel" id="panel6">
       <h2 class="section-title">Survival & Outcome</h2>
       <p class="section-subtitle">Disease-free survival, overall survival and disease status</p>
 
@@ -3790,55 +3775,6 @@
 
     </div><!-- end panel5 -->
 
-    <!-- ══════════════════════════════════════════ -->
-    <!-- TAB 6: Dashboard -->
-    <!-- ══════════════════════════════════════════ -->
-    <div class="tab-panel" id="panel6">
-      <h2 class="section-title">📊 Department Dashboard</h2>
-      <p class="section-subtitle">ภาพรวมผู้ป่วยและ KPI แผนก — NCI FY2569 · อัปเดตอัตโนมัติเมื่อเปิด tab</p>
-
-      <!-- Summary cards row -->
-      <div id="dash_cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px"></div>
-
-      <!-- KPI Section -->
-      <div class="subsection" style="border-left:3px solid var(--teal);margin-bottom:20px">
-        <div class="subsection-title">🎯 KPI — NCI FY2569</div>
-        <div id="dash_kpi"></div>
-      </div>
-
-      <!-- Stage distribution -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-        <div class="subsection" style="border-left:3px solid var(--gold)">
-          <div class="subsection-title">📐 Stage Distribution</div>
-          <div id="dash_stage"></div>
-        </div>
-        <div class="subsection" style="border-left:3px solid #a78bfa">
-          <div class="subsection-title">🧬 Molecular Subtype</div>
-          <div id="dash_subtype"></div>
-        </div>
-      </div>
-
-      <!-- Demographics row -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-        <div class="subsection" style="border-left:3px solid #60a5fa">
-          <div class="subsection-title">👩 Age Distribution</div>
-          <div id="dash_age"></div>
-        </div>
-        <div class="subsection" style="border-left:3px solid #34d399">
-          <div class="subsection-title">📅 Cases per Year</div>
-          <div id="dash_year"></div>
-        </div>
-      </div>
-
-      <!-- Waiting time detail -->
-      <div class="subsection" style="border-left:3px solid var(--accent);margin-bottom:20px">
-        <div class="subsection-title">⏱ Waiting Time Detail (median & range)</div>
-        <div id="dash_wait"></div>
-      </div>
-
-      <div style="font-size:11px;color:var(--text3);text-align:right;margin-top:8px" id="dash_updated"></div>
-    </div><!-- end panel6 -->
-
   </main>
 </div><!-- end app-body -->
 
@@ -3847,14 +3783,16 @@
 <script src="sync.js"></script>
 <script>
 
+// State + storage + Google Sheets calls live in sync.js (loaded above)
+
 // ─────────────────────────────────────────────────────
 // TAB SWITCHING
 // ─────────────────────────────────────────────────────
 function switchTab(n) {
   document.querySelectorAll('.tab-panel').forEach((p,i) => p.classList.toggle('active', i===n));
   document.querySelectorAll('.tab-btn').forEach((b,i)  => b.classList.toggle('active', i===n));
-  if (n === 2) refreshLesionSelectors();  // FIX: sync bx/sp/stg selectors when opening Investigation tab
-  if (n === 4) syncDxTab();   // sync diagnosis tab when opened
+  if (n === 3) refreshLesionSelectors();  // FIX: sync bx/sp/stg selectors when opening Investigation tab
+  if (n === 5) syncDxTab();   // sync diagnosis tab when opened
 }
 
 // ─────────────────────────────────────────────────────
@@ -3863,9 +3801,12 @@ function switchTab(n) {
 function markDirty() {
   if (_loadingData) return;
   isDirty = true;
+}
+function setBadge(type, msg) {
   const b = document.getElementById('storage-badge');
-  if (b && !b.textContent.includes('ยังไม่ได้บันทึก'))
-    setBadge('warn','● ยังไม่ได้บันทึก…');
+  if (!b) return;
+  b.className = 'storage-badge ' + (type === 'ok' ? 'storage-ok' : type === 'loading' ? 'storage-warn' : 'storage-warn');
+  b.textContent = msg || '💾 Offline';
 }
 function updateSidebar() { markDirty(); renderSidebar(); }
 
@@ -4155,7 +4096,7 @@ function linkFields() {
   link('date_or',    'brfs_start');
   link('date_or',    'drfs_start');
   link('date_or',    'drfs_start');
-  link('date_cmt',   'echo_date_0');  // cardiac baseline ≈ chemo start
+  // Note: echo_date_0 (cardiac baseline) now filled manually — tied to CMT session start
 
   // Pathology links: biopsy → Diagnosis tab display fields
   // (only fill if Diagnosis fields are empty — user may have changed them)
@@ -4176,7 +4117,7 @@ function linkFields() {
 function wireLinkFields() {
   const sources = [
     'bx_date','bx_patho_date','bx_subtype','bx_er','bx_pr','bx_her2','bx_ki67','bx_mol_subtype',
-    'date_dx','date_or','date_cmt'
+    'date_dx','date_or'
   ];
   sources.forEach(id => {
     const el = document.getElementById(id);
@@ -4231,10 +4172,12 @@ function onThaiDateInput(el, callback) {
   if (raw.length >= 5) formatted = raw.slice(0,2) + '/' + raw.slice(2,4) + '/' + raw.slice(4);
   // Only auto-format if value changed (avoid cursor jumping)
   if (el.value !== formatted && !el.value.endsWith('/')) {
+    const atEnd = el.selectionStart >= el.value.length;   // typing at the end of the box?
     const pos = el.selectionStart;
     el.value = formatted;
-    // Restore cursor
-    try { el.setSelectionRange(pos, pos); } catch(e) {}
+    // Keep cursor at the end when typing forward (slashes were inserted), else restore position
+    const np = atEnd ? formatted.length : pos;
+    try { el.setSelectionRange(np, np); } catch(e) {}
   }
 
   const str   = el.value;
@@ -4325,8 +4268,30 @@ function calcWaitingTimes() {
   const bxPathoDate = vDate('bx_patho_date');  // top-level consolidated patho date
   const dxDate      = vDate('date_dx');
   const ord         = vDate('date_or');
-  const cmt         = vDate('date_cmt');
   const rtStart     = vDate('date_rt_start');
+
+  // CMT: find earliest Adjuvant/Consolidation session start date → KPI 6.2
+  // Also find the very first CMT session start date (any aim) → for RT reference
+  let cmtAdjuvantDate = '';   // for KPI 6.2 (post-surgery chemo)
+  let cmtFirstDate    = '';   // earliest across all sessions
+  document.querySelectorAll('#cmt-sessions-container [id^="cmt-panel-"]').forEach(div => {
+    const n   = div.id.replace('cmt-panel-', '');
+    const sid = `cmt_s${n}`;
+    const aimEl   = document.getElementById(`${sid}_aim`);
+    const dateEl  = document.getElementById(`${sid}_date_start`);
+    if (!dateEl) return;
+    const iso = dateEl.dataset?.iso || '';
+    if (!iso) return;
+    // Track global first CMT date
+    if (!cmtFirstDate || iso < cmtFirstDate) cmtFirstDate = iso;
+    // Track first Adjuvant/Consolidation date for KPI 6.2
+    const aim = (aimEl ? aimEl.value : '').toLowerCase();
+    if (aim.includes('adjuvant') || aim.includes('consolidation')) {
+      if (!cmtAdjuvantDate || iso < cmtAdjuvantDate) cmtAdjuvantDate = iso;
+    }
+  });
+  // Fallback: if no adjuvant found but surgery exists → use any CMT
+  const cmt = cmtAdjuvantDate || cmtFirstDate;
 
   // KPI 5: need earliest biopsy date from per-lesion panels
   let earliestBxDate = '';
@@ -4364,20 +4329,34 @@ function calcWaitingTimes() {
   }
 
   // ── KPI 6.2 — Chemotherapy ≤ 42 days from surgery ────────
+  // Uses first Adjuvant/Consolidation session start date; falls back to any CMT session
   if (validDate(ord) && validDate(cmt)) {
     const d = daysBetween(ord, cmt);
+    const label = cmtAdjuvantDate ? 'Adjuvant CMT' : 'CMT';
     if (d >= 0 && d <= 1825) {
-      sv('kpi_cmt6wk', `${d} วัน (${(d/7).toFixed(1)} wk) — ${d<=42?'✅ ≤6wk':'⚠️ >6wk'}`);
+      sv('kpi_cmt6wk', `${d} วัน (${(d/7).toFixed(1)} wk) [${label}] — ${d<=42?'✅ ≤42 วัน (KPI 6.2)':'⚠️ >42 วัน'}`);
+    } else if (d < 0) {
+      sv('kpi_cmt6wk', `⚠️ CMT เริ่มก่อนผ่าตัด (Neoadjuvant — ไม่นับ KPI 6.2)`);
     } else {
-      sv('kpi_cmt6wk', d < 0 ? '⚠️ วันที่เริ่ม CMT ก่อนผ่าตัด' : '⚠️ ช่วงเวลาไม่สมเหตุ');
+      sv('kpi_cmt6wk', '⚠️ ช่วงเวลาไม่สมเหตุ');
     }
+  } else if (!validDate(ord) && validDate(cmt)) {
+    sv('kpi_cmt6wk', '⚠️ ไม่มีวันผ่าตัด — ไม่สามารถคำนวณ KPI 6.2');
   } else {
     sv('kpi_cmt6wk', '');
   }
 
   // ── KPI 6.3 — RT ≤ 42 days from last prior treatment ─────
-  // Start point = latest of (date_or, date_cmt); if neither, skip
-  const priorDates = [ord, cmt].filter(validDate);
+  // Start point = latest of (date_or, last CMT end date, first CMT date); if neither, skip
+  let cmtLastEndDate = '';
+  document.querySelectorAll('#cmt-sessions-container [id^="cmt-panel-"]').forEach(div => {
+    const n = div.id.replace('cmt-panel-', '');
+    const endEl = document.getElementById(`cmt_s${n}_date_end`);
+    const iso = endEl ? (endEl.dataset?.iso || '') : '';
+    if (iso && (!cmtLastEndDate || iso > cmtLastEndDate)) cmtLastEndDate = iso;
+  });
+  const cmtRef = cmtLastEndDate || cmtFirstDate;
+  const priorDates = [ord, cmtRef].filter(validDate);
   if (priorDates.length > 0 && validDate(rtStart)) {
     const lastPrior = priorDates.reduce((a, b) => (new Date(a) > new Date(b) ? a : b));
     const d = daysBetween(lastPrior, rtStart);
@@ -5057,6 +5036,441 @@ function restoreStgPanels(panels) {
   if (c) c.innerHTML = '';
   (panels||[]).forEach(p => addStgPanel(p.lid, p.side, p));
   refreshLesionSelectors();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  CMT SESSION PANELS
+//  Each session = { aim, regimen, cycles, date_start, date_end,
+//                   status, memo }
+//  Stored as cmt_sessions_json in record
+// ══════════════════════════════════════════════════════════════════
+
+const CMT_REGIMENS = [
+  '── Anthracycline-based ──',
+  'AC × 4 (Doxorubicin + Cyclophosphamide)',
+  'ddAC × 4 (dose-dense AC)',
+  'FAC × 6',
+  'FEC-100 × 6',
+  'EC × 4',
+  '── AC → Taxane (sequential) ──',
+  'AC-T (AC×4 → Paclitaxel×4)',
+  'AC-T (AC×4 → Paclitaxel weekly×12)',
+  'ddAC-ddT (dose-dense)',
+  'AC-TH (AC×4 → Paclitaxel + Trastuzumab)',
+  'AC-THP (AC×4 → Taxane + Trastuzumab + Pertuzumab)',
+  '── Taxane + Anti-HER2 (NAC backbone) ──',
+  'TCH × 6 (Docetaxel + Carboplatin + Trastuzumab)',
+  'TCHP × 6 (+ Pertuzumab)',
+  'TH × 4 (Paclitaxel + Trastuzumab — completion)',
+  '── Non-anthracycline ──',
+  'TC × 4 (Docetaxel + Cyclophosphamide)',
+  'TC × 6',
+  'CMF × 6',
+  '── Capecitabine ──',
+  'Capecitabine (adjuvant — post-NAC residual / TNBC)',
+  'Capecitabine (palliative)',
+  '── Platinum-based (TNBC / BRCA) ──',
+  'Carboplatin + Gemcitabine',
+  'Cisplatin (BRCA-mutated)',
+  'Carboplatin + Paclitaxel',
+  '── Palliative singles ──',
+  'Paclitaxel weekly (palliative)',
+  'Docetaxel 3-weekly (palliative)',
+  'Gemcitabine',
+  'Eribulin (Halaven)',
+  'Vinorelbine',
+  'Nab-paclitaxel (Abraxane)',
+  'อื่นๆ (ระบุในหมายเหตุ)'
+];
+
+// ─────────────────────────────────────────────────────
+// TUMOR MARKER FOLLOW-UP (multiple date + result rows per marker)
+// Stored as tm_json = { ca153:[{date,result}], cea:[], ca2729:[], ca125:[] }
+// ─────────────────────────────────────────────────────
+const TM_MARKERS = [
+  { key:'ca153',  name:'CA 15-3',  unit:'U/mL'  },
+  { key:'cea',    name:'CEA',      unit:'ng/mL' },
+  { key:'ca2729', name:'CA 27.29', unit:'U/mL'  },
+  { key:'ca125',  name:'CA 125',   unit:'U/mL'  }
+];
+let _tmRowCount = 0;
+
+function addTmRow(key, data) {
+  const box = document.getElementById('tm-rows-' + key);
+  if (!box) return;
+  const m = TM_MARKERS.find(x => x.key === key);
+  _tmRowCount++;
+  const n = _tmRowCount;
+  const row = document.createElement('div');
+  row.id = `tm-row-${n}`;
+  row.setAttribute('data-tm-key', key);
+  row.style.cssText = 'display:grid;grid-template-columns:24px 1fr 1fr 60px 28px;gap:8px;align-items:center;margin-bottom:6px';
+  row.innerHTML = `
+    <span class="tm-idx" style="font-size:11px;color:var(--text3);text-align:right"></span>
+    <input type="text" id="tm_${n}_date" class="date-input" placeholder="วว/ดด/พ.ศ." maxlength="10" autocomplete="off"
+           oninput="onThaiDateInput(this, ()=>{ markDirty() })">
+    <input type="text" id="tm_${n}_result" inputmode="decimal" placeholder="ผล (result)" oninput="markDirty()">
+    <span style="font-size:11px;color:var(--text3)">${m.unit}</span>
+    <button type="button" onclick="removeTmRow(${n})" title="ลบแถวนี้"
+            style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:15px;line-height:1">✕</button>`;
+  box.appendChild(row);
+  if (data) {
+    if (data.date) svDate(`tm_${n}_date`, data.date);
+    const r = document.getElementById(`tm_${n}_result`); if (r && data.result !== undefined) r.value = data.result;
+  }
+  renumberTm(key);
+  markDirty();
+}
+
+function removeTmRow(n) {
+  const row = document.getElementById(`tm-row-${n}`);
+  if (!row) return;
+  const key = row.getAttribute('data-tm-key');
+  row.remove();
+  renumberTm(key);
+  markDirty();
+}
+
+function renumberTm(key) {
+  document.querySelectorAll(`#tm-rows-${key} .tm-idx`).forEach((el, i) => el.textContent = (i + 1) + '.');
+}
+
+function buildTumorMarkers(data) {
+  const c = document.getElementById('tm-container');
+  if (!c) return;
+  c.innerHTML = '';
+  _tmRowCount = 0;
+  TM_MARKERS.forEach(m => {
+    const blk = document.createElement('div');
+    blk.style.cssText = 'background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px';
+    blk.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:12px;font-weight:700;color:var(--accent2)">${m.name} <span style="font-weight:400;color:var(--text3)">(${m.unit})</span></span>
+        <button type="button" onclick="addTmRow('${m.key}')"
+                style="background:var(--surface);border:1px solid var(--teal);color:var(--teal);border-radius:6px;padding:3px 12px;font-size:12px;cursor:pointer">+ เพิ่มผล</button>
+      </div>
+      <div id="tm-rows-${m.key}"></div>`;
+    c.appendChild(blk);
+    const rows = (data && Array.isArray(data[m.key]) && data[m.key].length) ? data[m.key] : [null];
+    rows.forEach(r => addTmRow(m.key, r));
+  });
+  _loadingData || (isDirty = isDirty);   // building rows is not a user edit
+}
+
+function collectTumorMarkers() {
+  const out = {};
+  TM_MARKERS.forEach(m => {
+    out[m.key] = [];
+    document.querySelectorAll(`#tm-rows-${m.key} [id^="tm-row-"]`).forEach(row => {
+      const n = row.id.replace('tm-row-', '');
+      const dEl = document.getElementById(`tm_${n}_date`);
+      const rEl = document.getElementById(`tm_${n}_result`);
+      const date = dEl ? (dEl.dataset.iso || '') : '';
+      const result = rEl ? rEl.value.trim() : '';
+      if (date || result) out[m.key].push({ date, result });
+    });
+  });
+  return out;
+}
+
+// Latest result (by date; if no dates, last row) — kept for old fields / Excel export
+function tmLatest(list) {
+  if (!list || !list.length) return '';
+  const dated = list.filter(x => x.date && x.result).sort((a, b) => a.date < b.date ? -1 : 1);
+  if (dated.length) return dated[dated.length - 1].result;
+  const any = list.filter(x => x.result);
+  return any.length ? any[any.length - 1].result : '';
+}
+
+let _cmtSessionCount = 0;
+
+function _cmtRegimenOptions() {
+  return CMT_REGIMENS.map(r =>
+    r.startsWith('──') ?
+      `<option disabled style="color:var(--text3);font-style:italic">${r}</option>` :
+      `<option value="${r}">${r}</option>`
+  ).join('');
+}
+
+function addCmtSession(data) {
+  _cmtSessionCount++;
+  const n = _cmtSessionCount;
+  const sid = `cmt_s${n}`;
+  const c = document.getElementById('cmt-sessions-container');
+  if (!c) return;
+
+  const div = document.createElement('div');
+  div.id = `cmt-panel-${n}`;
+  div.style.cssText = 'background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:14px;margin-bottom:10px;position:relative';
+
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:12px;font-weight:700;color:var(--accent2)">Session ${n}</span>
+      <button type="button" onclick="removeCmtSession(${n})"
+              style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:16px;line-height:1"
+              title="ลบ session นี้">✕</button>
+    </div>
+    <div class="form-grid g3">
+      <div class="field">
+        <label>Aim</label>
+        <select id="${sid}_aim" onchange="markDirty();calcWaitingTimes()">
+          <option value="">—</option>
+          <option value="Neoadjuvant (NAC)">Neoadjuvant (NAC)</option>
+          <option value="Adjuvant">Adjuvant</option>
+          <option value="Consolidation (post-NAC)">Consolidation (post-NAC)</option>
+          <option value="Palliative 1st line">Palliative 1st line</option>
+          <option value="Palliative 2nd line+">Palliative 2nd line+</option>
+          <option value="Deny treatment">Deny treatment</option>
+          <option value="Refer">Refer</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:span 2">
+        <label>Regimen</label>
+        <select id="${sid}_regimen" onchange="markDirty()">
+          <option value="">—</option>
+          ${_cmtRegimenOptions()}
+        </select>
+      </div>
+      <div class="field">
+        <label>Cycles</label>
+        <input type="number" id="${sid}_cycles" min="1" max="30" placeholder="จำนวน cycle"
+               style="width:100%" oninput="markDirty()">
+      </div>
+      <div class="field">
+        <label>Date start</label>
+        <input type="text" id="${sid}_date_start" class="date-input" placeholder="วว/ดด/พ.ศ."
+               maxlength="10" autocomplete="off"
+               oninput="onThaiDateInput(this, ()=>{ calcWaitingTimes() })">
+      </div>
+      <div class="field">
+        <label>Date end / last cycle</label>
+        <input type="text" id="${sid}_date_end" class="date-input" placeholder="วว/ดด/พ.ศ."
+               maxlength="10" autocomplete="off"
+               oninput="onThaiDateInput(this, ()=>{ markDirty() })">
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="${sid}_status" onchange="markDirty()">
+          <option value="">—</option>
+          <option value="Completed">Completed ✅</option>
+          <option value="Ongoing">Ongoing 🔄</option>
+          <option value="Stopped (toxicity)">Stopped — toxicity ⚠️</option>
+          <option value="Stopped (progression)">Stopped — progression ⚠️</option>
+          <option value="Denied by patient">Denied by patient</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:span 2">
+        <label>Memo</label>
+        <input type="text" id="${sid}_memo" placeholder="dose reduction, delay, ระบุยา..."
+               oninput="markDirty()">
+      </div>
+    </div>`;
+
+  c.appendChild(div);
+
+  // Restore saved data if provided
+  if (data) {
+    const setV = (id, val) => { const el=document.getElementById(id); if(el&&val!==undefined&&val!=='') el.value=val; };
+    setV(`${sid}_aim`,    data.aim);
+    setV(`${sid}_regimen`,data.regimen);
+    setV(`${sid}_cycles`, data.cycles);
+    setV(`${sid}_status`, data.status);
+    setV(`${sid}_memo`,   data.memo);
+    if (data.date_start) svDate(`${sid}_date_start`, data.date_start);
+    if (data.date_end)   svDate(`${sid}_date_end`,   data.date_end);
+  }
+
+  markDirty();
+}
+
+function removeCmtSession(n) {
+  const div = document.getElementById(`cmt-panel-${n}`);
+  if (div) div.remove();
+  markDirty();
+  calcWaitingTimes();
+}
+
+function collectCmtSessions() {
+  const sessions = [];
+  document.querySelectorAll('#cmt-sessions-container [id^="cmt-panel-"]').forEach(div => {
+    const n = div.id.replace('cmt-panel-', '');
+    const sid = `cmt_s${n}`;
+    const getV = id => { const el=document.getElementById(id); return el ? el.value : ''; };
+    const getIso = id => { const el=document.getElementById(id); return el ? (el.dataset.iso||'') : ''; };
+    sessions.push({
+      n:          Number(n),
+      aim:        getV(`${sid}_aim`),
+      regimen:    getV(`${sid}_regimen`),
+      cycles:     getV(`${sid}_cycles`),
+      date_start: getIso(`${sid}_date_start`),
+      date_end:   getIso(`${sid}_date_end`),
+      status:     getV(`${sid}_status`),
+      memo:       getV(`${sid}_memo`),
+    });
+  });
+  return sessions;
+}
+
+function restoreCmtSessions(sessions) {
+  const c = document.getElementById('cmt-sessions-container');
+  if (c) c.innerHTML = '';
+  _cmtSessionCount = 0;
+  (sessions || []).forEach(s => addCmtSession(s));
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  ANTI-HER2 SESSION PANELS
+//  Each session = { agent, aim, cycles, date_start, date_end,
+//                   status, memo }
+//  Stored as her2_sessions_json in record
+// ══════════════════════════════════════════════════════════════════
+
+const HER2_AGENTS = [
+  '── Trastuzumab-based ──',
+  'Trastuzumab (Herceptin)',
+  'Trastuzumab + Pertuzumab (HP)',
+  'T-DM1 (Kadcyla) — post-NAC residual',
+  'T-DXd (Enhertu) — 2nd line+',
+  '── Tyrosine-kinase inhibitors ──',
+  'Lapatinib (Tykerb)',
+  'Neratinib (Nerlynx) — extended adjuvant',
+  'Tucatinib (Tukysa) + Capecitabine + Trastuzumab',
+  '── Other ──',
+  'อื่นๆ (ระบุในหมายเหตุ)'
+];
+
+let _her2SessionCount = 0;
+
+function _her2AgentOptions() {
+  return HER2_AGENTS.map(a =>
+    a.startsWith('──') ?
+      `<option disabled style="color:var(--text3);font-style:italic">${a}</option>` :
+      `<option value="${a}">${a}</option>`
+  ).join('');
+}
+
+function addHer2Session(data) {
+  _her2SessionCount++;
+  const n = _her2SessionCount;
+  const sid = `her2_s${n}`;
+  const c = document.getElementById('her2-sessions-container');
+  if (!c) return;
+
+  const div = document.createElement('div');
+  div.id = `her2-panel-${n}`;
+  div.style.cssText = 'background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:14px;margin-bottom:10px;position:relative';
+
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:12px;font-weight:700;color:var(--accent2)">Anti-HER2 Session ${n}</span>
+      <button type="button" onclick="removeHer2Session(${n})"
+              style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:16px;line-height:1"
+              title="ลบ session นี้">✕</button>
+    </div>
+    <div class="form-grid g3">
+      <div class="field">
+        <label>Aim</label>
+        <select id="${sid}_aim" onchange="markDirty()">
+          <option value="">—</option>
+          <option value="Neoadjuvant">Neoadjuvant</option>
+          <option value="Adjuvant">Adjuvant</option>
+          <option value="Extended adjuvant">Extended adjuvant</option>
+          <option value="Palliative 1st line">Palliative 1st line</option>
+          <option value="Palliative 2nd line+">Palliative 2nd line+</option>
+          <option value="Deny treatment">Deny treatment</option>
+          <option value="Refer">Refer</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:span 2">
+        <label>Agent</label>
+        <select id="${sid}_agent" onchange="markDirty()">
+          <option value="">—</option>
+          ${_her2AgentOptions()}
+        </select>
+      </div>
+      <div class="field">
+        <label>Cycles</label>
+        <input type="number" id="${sid}_cycles" min="1" max="52" placeholder="จำนวน cycle"
+               style="width:100%" oninput="markDirty()">
+      </div>
+      <div class="field">
+        <label>Date start</label>
+        <input type="text" id="${sid}_date_start" class="date-input" placeholder="วว/ดด/พ.ศ."
+               maxlength="10" autocomplete="off"
+               oninput="onThaiDateInput(this, ()=>{ markDirty() })">
+      </div>
+      <div class="field">
+        <label>Date end / last cycle</label>
+        <input type="text" id="${sid}_date_end" class="date-input" placeholder="วว/ดด/พ.ศ."
+               maxlength="10" autocomplete="off"
+               oninput="onThaiDateInput(this, ()=>{ markDirty() })">
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="${sid}_status" onchange="markDirty()">
+          <option value="">—</option>
+          <option value="Completed">Completed ✅</option>
+          <option value="Ongoing">Ongoing 🔄</option>
+          <option value="Stopped (toxicity)">Stopped — toxicity ⚠️</option>
+          <option value="Stopped (progression)">Stopped — progression ⚠️</option>
+          <option value="Denied by patient">Denied by patient</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:span 2">
+        <label>Memo</label>
+        <input type="text" id="${sid}_memo" placeholder="combined with chemo, stand-alone, ระบุเพิ่มเติม..."
+               oninput="markDirty()">
+      </div>
+    </div>`;
+
+  c.appendChild(div);
+
+  if (data) {
+    const setV = (id, val) => { const el=document.getElementById(id); if(el&&val!==undefined&&val!=='') el.value=val; };
+    setV(`${sid}_aim`,    data.aim);
+    setV(`${sid}_agent`,  data.agent);
+    setV(`${sid}_cycles`, data.cycles);
+    setV(`${sid}_status`, data.status);
+    setV(`${sid}_memo`,   data.memo);
+    if (data.date_start) svDate(`${sid}_date_start`, data.date_start);
+    if (data.date_end)   svDate(`${sid}_date_end`,   data.date_end);
+  }
+
+  markDirty();
+}
+
+function removeHer2Session(n) {
+  const div = document.getElementById(`her2-panel-${n}`);
+  if (div) div.remove();
+  markDirty();
+}
+
+function collectHer2Sessions() {
+  const sessions = [];
+  document.querySelectorAll('#her2-sessions-container [id^="her2-panel-"]').forEach(div => {
+    const n = div.id.replace('her2-panel-', '');
+    const sid = `her2_s${n}`;
+    const getV = id => { const el=document.getElementById(id); return el ? el.value : ''; };
+    const getIso = id => { const el=document.getElementById(id); return el ? (el.dataset.iso||'') : ''; };
+    sessions.push({
+      n:          Number(n),
+      aim:        getV(`${sid}_aim`),
+      agent:      getV(`${sid}_agent`),
+      cycles:     getV(`${sid}_cycles`),
+      date_start: getIso(`${sid}_date_start`),
+      date_end:   getIso(`${sid}_date_end`),
+      status:     getV(`${sid}_status`),
+      memo:       getV(`${sid}_memo`),
+    });
+  });
+  return sessions;
+}
+
+function restoreHer2Sessions(sessions) {
+  const c = document.getElementById('her2-sessions-container');
+  if (c) c.innerHTML = '';
+  _her2SessionCount = 0;
+  (sessions || []).forEach(s => addHer2Session(s));
 }
 
 function deriveStage(t,n,m) {
@@ -6177,7 +6591,8 @@ function collectData() {
     // Labs
     lab_hb:v('lab_hb'),lab_wbc:v('lab_wbc'),lab_plt:v('lab_plt'),lab_cr:v('lab_cr'),
     lab_ast:v('lab_ast'),lab_alt:v('lab_alt'),lab_alp:v('lab_alp'),lab_tbili:v('lab_tbili'),lab_alb:v('lab_alb'),
-    lab_ca153:v('lab_ca153'),lab_cea:v('lab_cea'),lab_ca2729:v('lab_ca2729'),
+    tm_json: JSON.stringify(collectTumorMarkers()),
+    lab_ca153:tmLatest(collectTumorMarkers().ca153), lab_cea:tmLatest(collectTumorMarkers().cea), lab_ca2729:tmLatest(collectTumorMarkers().ca2729), lab_ca125:tmLatest(collectTumorMarkers().ca125),
     // Surgery
     kpi_patho2wk:v('kpi_patho2wk'),
     date_or:vd('date_or'),op_side:radVal('op_side'),or_hospital:radVal('or_hospital'),kpi_or4wk:v('kpi_or4wk'),
@@ -6210,10 +6625,15 @@ function collectData() {
     tumor_bed_w:v('tumor_bed_w'),tumor_bed_l:v('tumor_bed_l'),
     rcb_cellularity:v('rcb_cellularity'),rcb_insitu:v('rcb_insitu'),
     rcb_score:v('rcb_score'),rcb_class:v('rcb_class'),rcb_class_override:v('rcb_class_override'),
-    // Systemic
-    chemo:radVal('chemo'),chemo_aim:v('chemo_aim'),chemo_memo:v('chemo_memo'),date_cmt:vd('date_cmt'),
-    chemo_regimen:v('chemo_regimen'),kpi_cmt6wk:v('kpi_cmt6wk'),
-    antiher2:radVal('antiher2'),her2_agent:v('her2_agent'),date_her2:vd('date_her2'),antiher2_aim:v('antiher2_aim'),antiher2_memo:v('antiher2_memo'),
+    // Systemic — CMT & Anti-HER2 (multi-session)
+    cmt_sessions_json: JSON.stringify(collectCmtSessions()),
+    her2_sessions_json: JSON.stringify(collectHer2Sessions()),
+    // Legacy single-entry fields kept for backward compatibility (old records)
+    chemo: (()=>{ const s=collectCmtSessions(); return s.length>0?'yes':''; })(),
+    date_cmt: (()=>{ const s=collectCmtSessions().filter(x=>x.date_start); return s.length>0?s[0].date_start:''; })(),
+    antiher2: (()=>{ const s=collectHer2Sessions(); return s.length>0?'yes':''; })(),
+    date_her2: (()=>{ const s=collectHer2Sessions().filter(x=>x.date_start); return s.length>0?s[0].date_start:''; })(),
+    her2_agent: (()=>{ const s=collectHer2Sessions(); return s.length>0?(s[0].agent||''):''; })(),
     endocrine:radVal('endocrine'),endo_regimen:v('endo_regimen'),date_endo:vd('date_endo'),date_endo_switch:vd('date_endo_switch'),endo_duration:v('endo_duration'),endocrine_aim:v('endocrine_aim'),endocrine_memo:v('endocrine_memo'),
     cdk46:radVal('cdk46'),cdk46_agent:v('cdk46_agent'),cdk46_aim:v('cdk46_aim'),cdk46_memo:v('cdk46_memo'),cdk46_setting:v('cdk46_setting'),
     cdk46_indication:v('cdk46_indication'),cdk46_combo:v('cdk46_combo'),date_cdk46:vd('date_cdk46'),cdk46_note:v('cdk46_note'),
@@ -6266,6 +6686,55 @@ function collectData() {
 // LOAD DATA INTO FORM
 // ─────────────────────────────────────────────────────
 function migrateRecord(d) {
+  // ── Migration: legacy single chemo / anti-HER2 entry → session lists ──
+  // Old records stored one aim/regimen/date. New form reads cmt_sessions_json / her2_sessions_json.
+  const _fixDate = s => {
+    if (!s) return '';
+    s = String(s);
+    let m = s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    let y, mo, da;
+    if (m) {   // ISO timestamp (UTC) -> Thai calendar day (UTC+7); Buddhist year -> CE
+      const t = new Date(Date.UTC(+m[1] > 2400 ? +m[1]-543 : +m[1], +m[2]-1, +m[3], +m[4], +m[5]) + 7*3600*1000);
+      y = t.getUTCFullYear(); mo = t.getUTCMonth()+1; da = t.getUTCDate();
+    } else {
+      m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) return '';
+      y = +m[1] > 2400 ? +m[1]-543 : +m[1]; mo = +m[2]; da = +m[3];
+    }
+    return y + '-' + String(mo).padStart(2,'0') + '-' + String(da).padStart(2,'0');
+  };
+  const _cmtMap = {
+    '4AC → 4T (AC-T)': 'AC-T (AC×4 → Paclitaxel×4)',
+    '4AC → 4T + Herceptin (AC-TH)': 'AC-TH (AC×4 → Paclitaxel + Trastuzumab)',
+    '4AC → 12 weekly Pac': 'AC-T (AC×4 → Paclitaxel weekly×12)',
+    'ddAC-T': 'ddAC-ddT (dose-dense)'
+  };
+  const _her2Map = {
+    'Trastuzumab (Herceptin) 12 mo': 'Trastuzumab (Herceptin)',
+    'Pertuzumab + Trastuzumab': 'Trastuzumab + Pertuzumab (HP)'
+  };
+  if (!d.tm_json && (d.lab_ca153 || d.lab_cea || d.lab_ca2729)) {
+    const one = x => x ? [{ date: '', result: String(x) }] : [];
+    d.tm_json = JSON.stringify({ ca153: one(d.lab_ca153), cea: one(d.lab_cea), ca2729: one(d.lab_ca2729), ca125: [] });
+  }
+  if (!d.cmt_sessions_json && (d.chemo === 'yes' || d.chemo === 'deny' || d.chemo_aim || d.chemo_regimen || d.date_cmt)) {
+    const reg = d.chemo_regimen || '';
+    const memo = [d.chemo_memo, (reg && !_cmtMap[reg] && reg.indexOf('อื่นๆ') !== 0) ? 'Regimen เดิม: ' + reg : ''].filter(Boolean).join(' | ');
+    d.cmt_sessions_json = JSON.stringify([{
+      n: 1, aim: (d.chemo_aim === 'Palliative' ? 'Palliative 1st line' : d.chemo_aim) || (d.chemo === 'deny' ? 'Deny treatment' : ''),
+      regimen: _cmtMap[reg] || reg, cycles: '',
+      date_start: _fixDate(d.date_cmt), date_end: '', status: '',
+      memo: d.chemo_aim === 'Palliative' ? [memo, 'Aim เดิม: Palliative (ตรวจสอบ line)'].filter(Boolean).join(' | ') : memo
+    }]);
+  }
+  if (!d.her2_sessions_json && (d.antiher2 === 'yes' || d.antiher2_aim || d.her2_agent || d.date_her2)) {
+    const ag = d.her2_agent || '';
+    const memo = [d.antiher2_memo, (ag && !_her2Map[ag] && ag.indexOf('อื่นๆ') !== 0) ? 'Agent เดิม: ' + ag : ''].filter(Boolean).join(' | ');
+    d.her2_sessions_json = JSON.stringify([{
+      n: 1, aim: d.antiher2_aim || '', agent: _her2Map[ag] || ag, cycles: '',
+      date_start: _fixDate(d.date_her2), date_end: '', status: '', memo: memo
+    }]);
+  }
   // ── Migration: surg_ki67 text → numeric ──
   // Old: '5-10%','11-20%','21-30%','31-50%','51-80%','>80%'
   // New: numeric bucket values 0,1,10,14,20,30,40,50,60,70,80,90
@@ -6325,7 +6794,7 @@ function loadData(d) {
     'mwu_brain_date','mwu_liver_date','mwu_bone_date','mwu_pet_date',
     'bx_date','bx_patho_date','ln_bx_date','ln_patho_date',
     'date_or','surg_patho_date','r1_date',
-    'date_cmt','date_her2','date_endo','date_endo_switch',
+    'date_endo','date_endo_switch',
     'date_cdk46','date_parpi','date_immuno','date_ofs',
     'echo_date_0','muga_date_0','echo_date_pt','muga_date_pt',
     'echo_date_6m','muga_date_6m','echo_date_12m','muga_date_12m',
@@ -6344,6 +6813,14 @@ function loadData(d) {
   if (d.bx_panels_json) { try { restoreBxPanels(JSON.parse(d.bx_panels_json)); } catch(e) {} }
   if (d.sp_panels_json)  { try { restoreSpPanels(JSON.parse(d.sp_panels_json));  } catch(e) {} }
   if (d.stg_panels_json) { try { restoreStgPanels(JSON.parse(d.stg_panels_json)); } catch(e) {} }
+  // CMT & Anti-HER2 session panels
+  if (d.cmt_sessions_json) { try { restoreCmtSessions(JSON.parse(d.cmt_sessions_json)); } catch(e) { restoreCmtSessions([]); } }
+  else restoreCmtSessions([]);
+  if (d.her2_sessions_json) { try { restoreHer2Sessions(JSON.parse(d.her2_sessions_json)); } catch(e) { restoreHer2Sessions([]); } }
+  else restoreHer2Sessions([]);
+  // Tumor marker follow-up rows
+  if (d.tm_json) { try { buildTumorMarkers(JSON.parse(d.tm_json)); } catch(e) { buildTumorMarkers(null); } }
+  else buildTumorMarkers(null);
   refreshLesionSelectors();
 
   // Step 1: all simple inputs/selects/textareas by id (skip date fields — handled above)
@@ -6362,7 +6839,7 @@ function loadData(d) {
    'breastfeed','ocp','hrt','grade','bx_grade','bx_nuclear_grade','surg_grade',
    'surg_lvi','surg_pni','surg_discordance','margin_status','r1_procedure','final_margin',
    'op_side','or_hospital','slnb_done','slnb_side','slnb_inject','alnd_done','alnd_side',
-   'chemo','antiher2','endocrine','radiation','recurrence','pcr',
+   'endocrine','radiation','recurrence','pcr',
    'dfs_event','os_event','brfs_event','drfs_event',
    'cdk46','parpi','immuno','ofs','dose_reduction','post_rec_tx',
    'ene','met_overall','dcis_grade','comedo','final_ihc_source',
@@ -6445,6 +6922,9 @@ function clearForm() {
   restoreBxPanels([]);
   restoreSpPanels([]);
   restoreStgPanels([]);
+  restoreCmtSessions([]);
+  restoreHer2Sessions([]);
+  buildTumorMarkers(null);
   refreshLesionSelectors();
   ['mol_subtype','bx_mol_subtype','kpi_or4wk','kpi_cmt6wk','kpi_patho2wk','kpi_rt6wk','kpi_brca_eligible','bmi','rt_duration_display',
    'symptom_duration_num','ln_sum_total','ln_sum_positive','ln_sum_itc'
@@ -6539,7 +7019,7 @@ function newRecord() {
   currentId = null; clearForm();
   document.getElementById('btn-del').style.display = 'none';
   document.getElementById('audit-panel').style.display = 'none';
-  switchTab(0); isDirty = false;
+  switchTab(1); isDirty = false;
   const sb = document.getElementById('sidebar-search'); if(sb) sb.value = '';
   renderSidebar();
 }
@@ -6572,10 +7052,14 @@ function saveRecord() {
   if (APPS_SCRIPT_URL && rec) {
     setBadge('loading','⟳ กำลังบันทึก…');
     saveToSheets(rec).then(ok => {
-      setBadge(ok?'ok':'warn', ok?`⬤ ออนไลน์ — ${records.length} ผู้ป่วย`:'⚠️ บันทึก offline');
-      showToast(ok?'✅ บันทึกลง Google Sheets แล้ว':'💾 บันทึก local (Sheets ไม่ตอบสนอง)', ok?undefined:'var(--gold)');
+      isOnline = ok;
+      setBadge(ok?'ok':'warn', ok?`⬤ ออนไลน์ — ${records.length} ผู้ป่วย`:'⚠️ บันทึกในเครื่องแล้ว (Sheets ไม่ตอบ)');
+      showToast(ok?'✅ บันทึกลง Google Sheets แล้ว':'💾 บันทึกในเครื่องแล้ว — กด ↻ Sync เมื่อออนไลน์', ok?undefined:'var(--gold)');
     });
-  } else showToast('✅ บันทึกข้อมูลเรียบร้อย');
+  } else {
+    showToast('✅ บันทึกในเครื่องแล้ว (ยังไม่เชื่อมต่อ Sheets)');
+    setBadge('warn', '💾 เฉพาะในเครื่อง — ' + records.length + ' ผู้ป่วย');
+  }
   document.getElementById('btn-del').style.display = '';
   renderSidebar(); updateAuditPanel();
 }
@@ -6589,7 +7073,7 @@ function loadRecord(id) {
   _loadingData = true; loadData(rec); _loadingData = false;
   isDirty = false;
   document.getElementById('btn-del').style.display = '';
-  renderSidebar(); updateAuditPanel(); switchTab(0);
+  renderSidebar(); updateAuditPanel(); switchTab(1);
 }
 
 function deleteRecord() {
@@ -6603,7 +7087,10 @@ function deleteRecord() {
   document.getElementById('btn-del').style.display = 'none';
   document.getElementById('audit-panel').style.display = 'none';
   saveLocalCache();
-  if (APPS_SCRIPT_URL) deleteFromSheets(deletedId).then(ok => setBadge(ok?'ok':'warn', ok?`⬤ ออนไลน์ — ${records.length} ผู้ป่วย`:'⚠️ ลบ local แล้ว'));
+  if (APPS_SCRIPT_URL) deleteFromSheets(deletedId).then(ok => {
+    setBadge(ok?'ok':'warn', ok?`⬤ ออนไลน์ — ${records.length} ผู้ป่วย`:'⚠️ ลบในเครื่องแล้ว แต่ Sheets ยังไม่ถูกลบ');
+    if (!ok) showToast('⚠️ ลบใน Sheets ไม่สำเร็จ — รายการอาจกลับมาเมื่อ Sync', 'var(--gold)');
+  });
   renderSidebar(); showToast('🗑 ลบข้อมูลแล้ว','var(--accent)');
 }
 
@@ -6636,15 +7123,11 @@ function restoreJSON(event) {
       if (!Array.isArray(incoming)) throw new Error('Invalid format');
       if (!confirm(`นำเข้า ${incoming.length} ผู้ป่วย จาก "${file.name}"\nข้อมูลปัจจุบัน ${records.length} ราย จะถูก MERGE\n\nดำเนินการต่อ?`)) return;
       const existing = new Map(records.map(r => [r.id, r]));
-      incoming.forEach(r => { if (!existing.has(r.id)) existing.set(r.id, r); });
+      incoming.forEach(r => { if (!existing.has(r.id)) existing.set(r.id, migrateRecord({ ...r })); });
       records = Array.from(existing.values());
       saveLocalCache(); renderSidebar();
-      if (APPS_SCRIPT_URL) {
-        setBadge('loading','⟳ sync ขึ้น Sheets…');
-        fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'bulk_restore',records:records.map(r=>({...r,_id:r.id}))})})
-          .then(r=>r.json()).then(d => { setBadge('ok',`⬤ ออนไลน์ — ${records.length} ผู้ป่วย`); showToast(`📂 Restore+sync ${d.restored} ราย`,'var(--teal)'); })
-          .catch(() => showToast(`📂 Restore local สำเร็จ`,'var(--gold)'));
-      } else showToast(`📂 Restore สำเร็จ — ${records.length} ราย`,'var(--teal)');
+      setBadge(isOnline?'ok':'warn', (isOnline?'⬤ ออนไลน์ — ':'💾 เฉพาะในเครื่อง — ') + records.length + ' ผู้ป่วย');
+      showToast(`📂 Restore สำเร็จ — ${records.length} ราย` + (APPS_SCRIPT_URL?' (กด ↻ Sync เพื่ออัปโหลดขึ้น Sheets)':''),'var(--teal)');
     } catch(err) { showToast('❌ ไฟล์ไม่ถูกต้อง: '+err.message,'var(--accent)'); }
     event.target.value = '';
   };
@@ -6673,7 +7156,7 @@ function exportExcel() {
     mwu_cxr_result:'CXR',mwu_us_abd_result:'US abd',mwu_ct_cap_result:'CT CAP',
     mwu_brain_result:'CT/MRI brain',mwu_liver_result:'CT/MRI liver',
     mwu_bone_result:'Bone scan',mwu_pet_result:'PET-CT',met_overall:'Met status',
-    lab_hb:'Hb',lab_wbc:'WBC',lab_plt:'Plt',lab_cr:'Cr',lab_ast:'AST',lab_alt:'ALT',lab_ca153:'CA15-3',lab_cea:'CEA',
+    lab_hb:'Hb',lab_wbc:'WBC',lab_plt:'Plt',lab_cr:'Cr',lab_ast:'AST',lab_alt:'ALT',lab_ca153:'CA15-3 (latest)',lab_cea:'CEA (latest)',lab_ca125:'CA125 (latest)',
     date_or:'Date OR',op_side:'Side',op_breast_r:'Op(R)',op_breast_l:'Op(L)',
     slnb_total_r:'SLNB total(R)',slnb_macro_r:'SLNB macro(R)',slnb_micro_r:'SLNB micro(R)',
     slnb_total_l:'SLNB total(L)',slnb_macro_l:'SLNB macro(L)',slnb_micro_l:'SLNB micro(L)',
@@ -6729,17 +7212,22 @@ function exportExcel() {
 // URL SETUP + SYNC
 // ─────────────────────────────────────────────────────
 function setupURL() {
-  if (promptForURL()) {
-    loadFromSheets().then(ok => { if(ok) { renderSidebar(); showToast(`📂 เชื่อมต่อสำเร็จ — ${records.length} ผู้ป่วย`,'var(--teal)'); } });
-  }
+  if (!promptForURL()) return;
+  loadFromSheets().then(async ok => {
+    renderSidebar(); renderDashboard();
+    if (ok) { showToast(`📂 เชื่อมต่อสำเร็จ — ${records.length} ผู้ป่วย`,'var(--teal)'); await offerUploadPending(); renderSidebar(); renderDashboard(); }
+    else showToast('❌ เชื่อมต่อไม่สำเร็จ — ตรวจ URL / รหัสผ่าน','var(--accent)');
+  });
 }
 async function syncNow() {
   if (!APPS_SCRIPT_URL) { setupURL(); return; }
-  setBadge('loading','⟳ กำลัง sync…');
+  if (isDirty && !confirm('มีข้อมูลที่ยังไม่ได้บันทึก — Sync จะโหลดฟอร์มใหม่ ต้องการดำเนินการต่อหรือไม่?')) return;
   const ok = await loadFromSheets();
+  renderSidebar(); renderDashboard();
+  if (ok) await offerUploadPending();
+  if (ok && currentId !== null) { const rec = records.find(r=>r.id===currentId); if(rec){clearForm();_loadingData=true;loadData(rec);_loadingData=false;isDirty=false;} }
   renderSidebar();
-  if (currentId !== null) { const rec = records.find(r=>r.id===currentId); if(rec){clearForm();_loadingData=true;loadData(rec);_loadingData=false;isDirty=false;} }
-  showToast(ok?`↻ Sync ${records.length} ราย`:'⚠️ Sync ล้มเหลว', ok?'var(--teal)':'var(--gold)');
+  showToast(ok?`↻ Sync ${records.length} ราย`:'⚠️ Sync ล้มเหลว — ตรวจ URL / รหัสผ่าน / อินเทอร์เน็ต', ok?'var(--teal)':'var(--gold)');
 }
 
 // ─────────────────────────────────────────────────────
@@ -6764,11 +7252,16 @@ window.addEventListener('beforeunload', e => { if (isDirty) { e.preventDefault()
 window.addEventListener('DOMContentLoaded', async () => {
   wireLinkFields();
   loadLocalCache(); renderSidebar();
-  if (!APPS_SCRIPT_URL) { setBadge('warn','⚙️ ยังไม่ได้ตั้งค่า URL'); showToast('⚙️ คลิก "⚙️ URL" เพื่อเชื่อมต่อ Google Sheets','var(--gold)'); return; }
-  setBadge('loading','⟳ กำลังเชื่อมต่อ…');
+  renderDashboard();  // Dashboard is tab 0 — render on load
+  if (!APPS_SCRIPT_URL) {
+    setBadge('warn','⚙️ ยังไม่ได้เชื่อมต่อ — ใช้ในเครื่อง ' + records.length + ' ราย');
+    showToast('⚙️ กด "เชื่อมต่อ" เพื่อใช้ Google Sheets (ครั้งเดียวต่อเครื่อง)','var(--gold)');
+    return;
+  }
   const ok = await loadFromSheets();
-  if (ok) { renderSidebar(); if(records.length) showToast(`📂 โหลด ${records.length} ผู้ป่วย จาก Sheets`,'var(--teal)'); }
-  else if (records.length) showToast(`💾 ใช้ cache — ${records.length} ราย`,'var(--gold)');
+  renderSidebar(); renderDashboard();
+  if (ok) { if (records.length) showToast(`📂 โหลด ${records.length} ผู้ป่วย จาก Sheets`,'var(--teal)'); await offerUploadPending(); renderSidebar(); renderDashboard(); }
+  else if (records.length) showToast(`💾 ใช้ข้อมูลในเครื่อง — ${records.length} ราย`,'var(--gold)');
 });
 
 newRecord();
@@ -6938,14 +7431,35 @@ function _calcAllKpi(recs) {
       if (d>=0 && d<=3650) { kpi61.total++; wait61.push(d); if(d<=28) kpi61.pass++; }
     }
 
-    const cmt = r.date_cmt||'';
+    // KPI 6.2: use cmt_sessions_json — find earliest Adjuvant/Consolidation start
+    let cmtKpiDate = '';
+    let cmtLastEndDash = '';
+    try {
+      const sessions = r.cmt_sessions_json ? JSON.parse(r.cmt_sessions_json) : [];
+      sessions.forEach(s => {
+        if (!s.date_start) return;
+        const aim = (s.aim||'').toLowerCase();
+        if (aim.includes('adjuvant') || aim.includes('consolidation')) {
+          if (!cmtKpiDate || s.date_start < cmtKpiDate) cmtKpiDate = s.date_start;
+        }
+        if (!cmtKpiDate && (!r.date_or || s.date_start > (r.date_or||''))) {
+          // fallback: any CMT after surgery
+          if (!cmtKpiDate || s.date_start < cmtKpiDate) cmtKpiDate = s.date_start;
+        }
+        if (s.date_end && s.date_end > cmtLastEndDash) cmtLastEndDash = s.date_end;
+      });
+    } catch(e) {}
+    // Legacy fallback for old records without sessions JSON
+    if (!cmtKpiDate) cmtKpiDate = r.date_cmt||'';
+    const cmt = cmtKpiDate;
     if (_dashValidDate(ord) && _dashValidDate(cmt)) {
       const d = _dashDays(ord,cmt);
       if (d>=0 && d<=1825) { kpi62.total++; wait62.push(d); if(d<=42) kpi62.pass++; }
     }
 
     const rtStart   = r.date_rt_start||'';
-    const lastPrior = _dashLater(ord,cmt);
+    const cmtRefDash = cmtLastEndDash || cmt;
+    const lastPrior = _dashLater(ord,cmtRefDash);
     if (_dashValidDate(lastPrior) && _dashValidDate(rtStart)) {
       const d = _dashDays(lastPrior,rtStart);
       if (d>=0 && d<=1825) { kpi63.total++; wait63.push(d); if(d<=42) kpi63.pass++; }
@@ -6967,7 +7481,10 @@ function renderDashboard() {
   // ── Summary cards ─────────────────────────────────────────────
   const hasSurgery = records.filter(r => r.date_or).length;
   const hasRT      = records.filter(r => r.date_rt_start).length;
-  const hasChemo   = records.filter(r => r.date_cmt).length;
+  const hasChemo   = records.filter(r => {
+    try { if (r.cmt_sessions_json) return JSON.parse(r.cmt_sessions_json).length > 0; } catch(e) {}
+    return !!r.date_cmt; // legacy fallback
+  }).length;
   const card = (val, label, color) =>
     `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:14px 10px;text-align:center">
       <div style="font-size:28px;font-weight:800;color:${color}">${val}</div>
