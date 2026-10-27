@@ -750,8 +750,14 @@
 
       <!-- KPI Section -->
       <div class="subsection" style="border-left:3px solid var(--teal);margin-bottom:20px">
-        <div class="subsection-title">🎯 KPI — NCI FY2569</div>
+        <div class="subsection-title">🎯 KPI รายปี — เกณฑ์ NCI FY2569</div>
         <div id="dash_kpi"></div>
+      </div>
+
+      <!-- Complications per year: old system vs DISH -->
+      <div class="subsection" style="border-left:3px solid #f97316;margin-bottom:20px">
+        <div class="subsection-title">🩹 Post-op Complications รายปี — ระบบเดิม vs DISH</div>
+        <div id="dash_comp"></div>
       </div>
 
       <!-- Stage distribution -->
@@ -1801,7 +1807,7 @@
             </div>
             <div class="field">
               <label>Reconstruction (Right)</label>
-              <select id="reconstruction_r" onchange="markDirty()">
+              <select id="reconstruction_r" onchange="markDirty();renderDishSummary()">
                 <option value="">—</option>
                 <option>None</option><option>Implant-based (immediate)</option>
                 <option>Implant-based (delayed)</option><option>TRAM/DIEP flap</option>
@@ -1831,7 +1837,7 @@
             </div>
             <div class="field">
               <label>Reconstruction (Left)</label>
-              <select id="reconstruction_l" onchange="markDirty()">
+              <select id="reconstruction_l" onchange="markDirty();renderDishSummary()">
                 <option value="">—</option>
                 <option>None</option><option>Implant-based (immediate)</option>
                 <option>Implant-based (delayed)</option><option>TRAM/DIEP flap</option>
@@ -2474,6 +2480,26 @@
             </div>
 
           </div><!-- end complication_panels -->
+
+          <!-- DISH classification (parallel to the old grading above) -->
+          <div id="dish_block" style="margin-top:18px;border:1px solid var(--teal);border-radius:var(--radius);padding:14px;background:var(--surface2)">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+              <div>
+                <div style="font-size:13px;font-weight:800;color:var(--teal)">🆕 DISH Classification — Surgical Site Outcomes</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Dehiscence · Inflammation/Infection · Seroma · Hematoma — Bond-Smith et al., BJS 2026;113:znag112</div>
+              </div>
+              <button type="button" onclick="addDishAssessment()" style="padding:6px 16px;background:var(--teal);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:600">+ เพิ่มการประเมิน</button>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6">
+              ใช้เก็บคู่กับระบบเดิมด้านบนเพื่อเปรียบเทียบ — <b>ให้ประเมินจากเวชระเบียนโดยตรง ไม่ต้องแปลงจาก Clavien-Dindo/CTCAE</b>.
+              แต่ละโดเมนให้ 2 ค่า: <b>Intervention 0–4</b> (ได้รับการจัดการอะไร) และ <b>Presentation a–d</b> (ลักษณะ/ความรุนแรง; ถ้า Intervention = 0 ไม่ต้องเลือก).
+              ประเมินที่ discharge และ follow-up ครั้งที่ 1–3 พร้อมใส่สัปดาห์หลังผ่าตัดเอง. ช่วงติดตามที่นับ: 90 วัน (ไม่มี reconstruction) หรือ 1 ปี (มี implant/flap).
+            </div>
+            <div id="dish-container"></div>
+            <div id="dish_summary"></div>
+            <details style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;color:var(--teal)">ดูคำนิยามเต็มของแต่ละระดับ</summary>
+              <div id="dish_defs" style="font-size:11px;line-height:1.6;margin-top:6px;overflow-x:auto"></div></details>
+          </div>
 
           <div class="field" style="margin-top:14px">
             <label>หมายเหตุ Surgery</label>
@@ -4256,119 +4282,32 @@ function calcBMI() {
   markDirty();
 }
 function calcWaitingTimes() {
-  // ── helpers ───────────────────────────────────────────────
-  const validDate = (s) => {
-    if (!s) return false;
-    const d = new Date(s);
-    return !isNaN(d) && d.getFullYear() >= 1900 && d.getFullYear() <= 2100;
+  // Per-patient KPI boxes — uses the same NCI FY2569 engine as the Dashboard
+  // Older records keep the biopsy date only at top level (no per-lesion panel) — use it when no panel has one
+  const panels = collectBxPanels();
+  const stored = (typeof currentId !== 'undefined' && currentId) ? (records.find(r => r.id === currentId) || {}) : {};
+  const rec = {
+    bx_date: panels.some(p => p.bx_date) ? '' : (vDate('bx_date') || stored.bx_date || ''),
+    bx_patho_date: vDate('bx_patho_date') || (panels.some(p => p.bx_patho_date) ? '' : (stored.bx_patho_date || '')),
+    date_dx: vDate('date_dx'),
+    date_imaging: vDate('date_imaging'), date_or: vDate('date_or'),
+    rt_aim: v('rt_aim'), date_rt_start: vDate('date_rt_start'), date_rt_complete: vDate('date_rt_complete'),
+    stage_overall: v('stage_overall'),
+    bx_panels_json: JSON.stringify(panels),
+    cmt_sessions_json: JSON.stringify(collectCmtSessions())
   };
-  const daysBetween = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
-
-  // ── collect dates ─────────────────────────────────────────
-  const bxPathoDate = vDate('bx_patho_date');  // top-level consolidated patho date
-  const dxDate      = vDate('date_dx');
-  const ord         = vDate('date_or');
-  const rtStart     = vDate('date_rt_start');
-
-  // CMT: find earliest Adjuvant/Consolidation session start date → KPI 6.2
-  // Also find the very first CMT session start date (any aim) → for RT reference
-  let cmtAdjuvantDate = '';   // for KPI 6.2 (post-surgery chemo)
-  let cmtFirstDate    = '';   // earliest across all sessions
-  document.querySelectorAll('#cmt-sessions-container [id^="cmt-panel-"]').forEach(div => {
-    const n   = div.id.replace('cmt-panel-', '');
-    const sid = `cmt_s${n}`;
-    const aimEl   = document.getElementById(`${sid}_aim`);
-    const dateEl  = document.getElementById(`${sid}_date_start`);
-    if (!dateEl) return;
-    const iso = dateEl.dataset?.iso || '';
-    if (!iso) return;
-    // Track global first CMT date
-    if (!cmtFirstDate || iso < cmtFirstDate) cmtFirstDate = iso;
-    // Track first Adjuvant/Consolidation date for KPI 6.2
-    const aim = (aimEl ? aimEl.value : '').toLowerCase();
-    if (aim.includes('adjuvant') || aim.includes('consolidation')) {
-      if (!cmtAdjuvantDate || iso < cmtAdjuvantDate) cmtAdjuvantDate = iso;
-    }
-  });
-  // Fallback: if no adjuvant found but surgery exists → use any CMT
-  const cmt = cmtAdjuvantDate || cmtFirstDate;
-
-  // KPI 5: need earliest biopsy date from per-lesion panels
-  let earliestBxDate = '';
-  document.querySelectorAll('[id^="bx-panel-"]').forEach(div => {
-    const lid = div.id.replace('bx-panel-', '');
-    const bd  = (document.getElementById(`bx_date_${lid}`) || {}).dataset?.iso || '';
-    if (bd && (!earliestBxDate || bd < earliestBxDate)) earliestBxDate = bd;
-  });
-
-  // dx reference for KPI 6.1: prefer patho date, fall back to date_dx
-  const dx = bxPathoDate || dxDate;
-
-  // ── KPI 5 — Pathology turnaround ≤ 14 days ───────────────
-  if (validDate(earliestBxDate) && validDate(bxPathoDate)) {
-    const d = daysBetween(earliestBxDate, bxPathoDate);
-    if (d >= 0 && d <= 365) {
-      sv('kpi_patho2wk', `${d} วัน — ${d<=14?'✅ ≤14 days (KPI5)':'⚠️ >14 days'}`);
-    } else {
-      sv('kpi_patho2wk', d < 0 ? '⚠️ วันผลก่อนวันเจาะ' : '⚠️ ช่วงเวลาไม่สมเหตุ');
-    }
-  } else {
-    sv('kpi_patho2wk', '');
-  }
-
-  // ── KPI 6.1 — Surgery ≤ 28 days from Dx ─────────────────
-  if (validDate(dx) && validDate(ord)) {
-    const d = daysBetween(dx, ord);
-    if (d >= 0 && d <= 3650) {
-      sv('kpi_or4wk', `${d} วัน (${(d/7).toFixed(1)} wk) — ${d<=28?'✅ ≤4wk':'⚠️ >4wk'}`);
-    } else {
-      sv('kpi_or4wk', d < 0 ? '⚠️ วันที่ผ่าตัดก่อนวันวินิจฉัย' : '⚠️ ช่วงเวลาไม่สมเหตุ');
-    }
-  } else {
-    sv('kpi_or4wk', '');
-  }
-
-  // ── KPI 6.2 — Chemotherapy ≤ 42 days from surgery ────────
-  // Uses first Adjuvant/Consolidation session start date; falls back to any CMT session
-  if (validDate(ord) && validDate(cmt)) {
-    const d = daysBetween(ord, cmt);
-    const label = cmtAdjuvantDate ? 'Adjuvant CMT' : 'CMT';
-    if (d >= 0 && d <= 1825) {
-      sv('kpi_cmt6wk', `${d} วัน (${(d/7).toFixed(1)} wk) [${label}] — ${d<=42?'✅ ≤42 วัน (KPI 6.2)':'⚠️ >42 วัน'}`);
-    } else if (d < 0) {
-      sv('kpi_cmt6wk', `⚠️ CMT เริ่มก่อนผ่าตัด (Neoadjuvant — ไม่นับ KPI 6.2)`);
-    } else {
-      sv('kpi_cmt6wk', '⚠️ ช่วงเวลาไม่สมเหตุ');
-    }
-  } else if (!validDate(ord) && validDate(cmt)) {
-    sv('kpi_cmt6wk', '⚠️ ไม่มีวันผ่าตัด — ไม่สามารถคำนวณ KPI 6.2');
-  } else {
-    sv('kpi_cmt6wk', '');
-  }
-
-  // ── KPI 6.3 — RT ≤ 42 days from last prior treatment ─────
-  // Start point = latest of (date_or, last CMT end date, first CMT date); if neither, skip
-  let cmtLastEndDate = '';
-  document.querySelectorAll('#cmt-sessions-container [id^="cmt-panel-"]').forEach(div => {
-    const n = div.id.replace('cmt-panel-', '');
-    const endEl = document.getElementById(`cmt_s${n}_date_end`);
-    const iso = endEl ? (endEl.dataset?.iso || '') : '';
-    if (iso && (!cmtLastEndDate || iso > cmtLastEndDate)) cmtLastEndDate = iso;
-  });
-  const cmtRef = cmtLastEndDate || cmtFirstDate;
-  const priorDates = [ord, cmtRef].filter(validDate);
-  if (priorDates.length > 0 && validDate(rtStart)) {
-    const lastPrior = priorDates.reduce((a, b) => (new Date(a) > new Date(b) ? a : b));
-    const d = daysBetween(lastPrior, rtStart);
-    if (d >= 0 && d <= 1825) {
-      sv('kpi_rt6wk', `${d} วัน (${(d/7).toFixed(1)} wk) — ${d<=42?'✅ ≤6wk (KPI6.3)':'⚠️ >6wk'}`);
-    } else {
-      sv('kpi_rt6wk', d < 0 ? '⚠️ RT ก่อนการรักษาก่อนหน้า' : '⚠️ ช่วงเวลาไม่สมเหตุ');
-    }
-  } else {
-    sv('kpi_rt6wk', '');
-  }
-
+  const k = _kpiPatient(rec);
+  const show = (id, x, limit, tag) => {
+    if (!x || x.status === 'nodate') { sv(id, ''); return; }
+    if (x.status === 'nostart')     { sv(id, '⚠️ ไม่มีวันเริ่มนับ (วันตัดชิ้นเนื้อ/วันตรวจภาพถ่าย)'); return; }
+    if (x.status === 'negative')    { sv(id, '⚠️ วันที่เรียงผิดลำดับ (เกิดก่อนวันเริ่มนับ)'); return; }
+    if (x.status === 'implausible') { sv(id, '⚠️ ช่วงเวลาไม่สมเหตุสมผล — ตรวจวันที่'); return; }
+    sv(id, `${x.days} วัน${x.from ? ' (นับจาก' + x.from + ')' : ''} — ${x.pass ? '✅ ≤' + limit + ' วัน (' + tag + ')' : '⚠️ >' + limit + ' วัน'}${x.approx ? ' · ไม่มีวันสิ้นสุดการรักษาก่อนหน้า ใช้วันเริ่มแทน' : ''}`);
+  };
+  show('kpi_patho2wk', k.k5,  14, 'KPI5');
+  show('kpi_or4wk',    k.k61, 28, 'KPI6.1');
+  show('kpi_cmt6wk',   k.k62, 42, 'KPI6.2');
+  show('kpi_rt6wk',    k.k63, 42, 'KPI6.3');
   markDirty();
 }
 function calcEndoDuration() {
@@ -4453,6 +4392,235 @@ function restoreComplications(data) {
     }
   });
 }
+
+// ── Complication engine (old + DISH) ──
+// ═══════════════════════════════════════════════════════════════
+// COMPLICATION ENGINE — old system (Clavien-Dindo / CTCAE) and DISH
+//  Year of a patient = year of surgery (date_or), calendar or fiscal.
+//  Follow-up window: 13 weeks (≈90 days) normally, 52 weeks when the
+//  patient had any breast reconstruction (implant or flap).
+//  An event counts when its week-of-onset is blank or inside the window.
+// ═══════════════════════════════════════════════════════════════
+const DISH_KEYS = ['D', 'I', 'S', 'H'];
+const DISH_NAMES = { D: 'Dehiscence (แผลแยก)', I: 'Inflammation/Infection (อักเสบ/ติดเชื้อ)', S: 'Seroma', H: 'Hematoma' };
+
+function _dishList(r) { try { const a = JSON.parse(r.dish_json || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+function _compWindowWeeks(r) {
+  const has = s => { s = String(s || '').trim(); return s !== '' && !/^none$/i.test(s); };
+  return (has(r.reconstruction_r) || has(r.reconstruction_l)) ? 52 : 13;
+}
+const _inWin = (wk, max) => { const w = parseFloat(wk); return isNaN(w) || w <= max; };
+
+// Worst DISH grade per domain over all assessments inside the window.
+// returns null when there is no assessment, else { D:{i,p}, I:{..}, S, H, n, incomplete }
+function _dishWorst(list, maxWk) {
+  const use = (list || []).filter(a => a && _inWin(a.week, maxWk));
+  if (!use.length) return null;
+  const out = { n: use.length, incomplete: 0 };
+  DISH_KEYS.forEach(k => {
+    let best = { i: -1, p: '' };
+    use.forEach(a => {
+      const d = a[k] || {}, i = d.i === '' || d.i == null ? -1 : parseInt(d.i, 10);
+      if (isNaN(i) || i < 0) { out.incomplete++; return; }
+      const p = i === 0 ? '' : (d.p || '');
+      if (i > best.i || (i === best.i && p > best.p)) best = { i, p };
+    });
+    out[k] = best;
+  });
+  return out;
+}
+const _dishCode = w => w ? DISH_KEYS.map(k => w[k].i < 0 ? k + '?' : (w[k].i === 0 ? k + '0' : k + w[k].i + (w[k].p || '?'))).join(' ') : '';
+
+// Old-system complications of one patient → { assessed, items:{seroma:{grade},..} } (window applied)
+function _oldComp(r, maxWk) {
+  let c = null;
+  try { c = r.complications_json ? JSON.parse(r.complications_json) : null; } catch (e) {}
+  if (!c) return { assessed: false, items: {} };
+  if (c.none) return { assessed: true, items: {} };
+  const items = {};
+  Object.keys(c).forEach(k => { const d = c[k]; if (d && d.checked && _inWin(d.weeks, maxWk)) items[k] = { grade: d.grade || '' }; });
+  // a record whose only checked items fell outside the window still counts as assessed (no event in window)
+  return { assessed: Object.keys(c).some(k => c[k] && c[k].checked) || false, items };
+}
+const _CD_HIGH = ['IIIa', 'IIIb', 'IVa', 'IVb', 'V'];
+const _CD_KEYS = ['wound', 'hematoma', 'flap', 'dvt', 'other'];   // these use Clavien-Dindo grades
+
+// One patient → flags used by the dashboard
+function _compPatient(r) {
+  const win = _compWindowWeeks(r);
+  const old = _oldComp(r, win), list = _dishList(r), dw = _dishWorst(list, win);
+  const res = { win, old: null, dish: null };
+  if (old.assessed) {
+    const k = Object.keys(old.items);
+    res.old = {
+      any: k.length > 0,
+      cd3: k.some(x => _CD_KEYS.includes(x) && _CD_HIGH.includes(old.items[x].grade)),
+      seroma: !!old.items.seroma, wound: !!old.items.wound, hematoma: !!old.items.hematoma, lymph: !!old.items.lymphedema,
+      sso: !!(old.items.seroma || old.items.wound || old.items.hematoma)     // the part of the old form that DISH also covers
+    };
+  }
+  if (dw) {
+    const g = k => dw[k].i;
+    res.dish = {
+      any: DISH_KEYS.some(k => g(k) >= 1), int3: DISH_KEYS.some(k => g(k) >= 3),
+      D: g('D') >= 1, I: g('I') >= 1, S: g('S') >= 1, H: g('H') >= 1, code: _dishCode(dw)
+    };
+  }
+  return res;
+}
+
+const COMP_ROWS_OLD = [
+  ['any',    'มี complication ใดๆ (ระบบเดิม)'],
+  ['cd3',    'Clavien-Dindo ≥ IIIa (ต้องทำหัตถการ/ผ่าตัดซ้ำ/ICU)'],
+  ['seroma', 'Seroma'], ['wound', 'Wound infection'], ['hematoma', 'Hematoma'], ['lymph', 'Lymphedema']
+];
+const COMP_ROWS_DISH = [
+  ['any',  'มี SSO ใดๆ (DISH ≥ 1 ในโดเมนใดก็ได้)'],
+  ['int3', 'DISH intervention ≥ 3 (ต้องระบาย/ผ่าตัดซ้ำ)'],
+  ['D', 'Dehiscence'], ['I', 'Inflammation/Infection'], ['S', 'Seroma'], ['H', 'Hematoma']
+];
+
+function _compAggregate(recs, mode) {
+  const blank = () => ({
+    old: { n: 0 }, dish: { n: 0 }, cmp: { n: 0, agree: 0, dishOnly: 0, oldOnly: 0 }
+  });
+  COMP_ROWS_OLD.forEach(([k]) => 0); 
+  const out = { by: {}, all: blank(), years: [], noSurgery: 0 };
+  const yrs = new Set();
+  const bump = (c, p) => {
+    if (p.old) { c.old.n++; COMP_ROWS_OLD.forEach(([k]) => { if (p.old[k]) c.old[k] = (c.old[k] || 0) + 1; }); }
+    if (p.dish) { c.dish.n++; COMP_ROWS_DISH.forEach(([k]) => { if (p.dish[k]) c.dish[k] = (c.dish[k] || 0) + 1; }); }
+    if (p.old && p.dish) {
+      c.cmp.n++;
+      if (p.old.sso === p.dish.any) c.cmp.agree++; else if (p.dish.any) c.cmp.dishOnly++; else c.cmp.oldOnly++;
+    }
+  };
+  (recs || []).forEach(r => {
+    const p = _compPatient(r);
+    if (!p.old && !p.dish) return;
+    const d = _ymd(r.date_or);
+    if (!d) { out.noSurgery++; return; }
+    const y = _kYear(d, mode); yrs.add(y);
+    bump(out.by[y] || (out.by[y] = blank()), p); bump(out.all, p);
+  });
+  out.years = Array.from(yrs).sort((a, b) => a - b);
+  return out;
+}
+
+// ═══════════════════════════════════════════════════
+// DISH CLASSIFICATION — form block (runs beside the old complication fields)
+// Bond-Smith G, et al. BJS 2026;113(9):znag112 (CC-BY).  Entered separately from the old grades on purpose,
+// so the two systems can be compared later.
+// ═══════════════════════════════════════════════════
+const DISH_TP = [['discharge', 'Discharge'], ['f1', '1st follow-up'], ['f2', '2nd follow-up'], ['f3', '3rd follow-up']];
+const DISH_DEF = {
+  D: { int: ['None', 'Patient self-monitoring', 'Local treatment ± local anaesthesia', 'Re-operation (GA/spinal/regional), no reconstruction', 'Re-operation (GA/spinal/regional) with reconstruction'],
+       pres: ['Partial separation, none/minimal discharge', 'Substantial separation, fascia/deep tissue intact', 'Extensive separation into deep tissue layers', 'All tissue layers, ± organ exposure'] },
+  I: { int: ['None', 'Patient self-monitoring', 'Healthcare-professional monitoring; closed-incision management; antibiotics optional', 'Re-operation under local anaesthesia, or percutaneous drainage; antibiotics optional', 'Re-operation under GA/spinal/regional'],
+       pres: ['≥1 sign: redness, swelling, heat, pain, serous exudate', '≥2 signs (non-serous exudate counts) PLUS ≥1: raised CRP, raised WBC, temp >38°C, positive culture, gas in tissue', 'Severe infection, systemic sepsis or single-organ failure', 'Septic shock / sepsis-related multi-organ failure'] },
+  S: { int: ['None', 'Patient self-monitoring', 'Healthcare-professional monitoring ± imaging', 'Local treatment under local anaesthesia, or percutaneous drainage', 'Re-operation under GA/spinal/regional'],
+       pres: ['Localised collection, none/minimal discomfort', 'Large collection, moderate discomfort/pressure', 'Large complex collection, significant symptoms', 'Large complex collection, life-threatening symptoms, or chronic walled-off'] },
+  H: { int: ['None', 'Patient self-monitoring', 'Healthcare-professional monitoring', 'Local treatment under local anaesthesia, percutaneous drainage, or embolisation', 'Re-operation or radiological intervention under GA/spinal/regional'],
+       pres: ['Bruising ± swelling, no substantial symptoms', 'Enlarging haematoma with swelling and pain', 'Significant haematoma, substantial swelling/pain, compromising nearby structures', 'Significant haematoma with active bleeding'] }
+};
+let _dishCount = 0;
+
+function _dishSelects(a, k, id) {
+  const d = DISH_DEF[k];
+  const iOpts = '<option value="">—</option>' + d.int.map((t, i) => `<option value="${i}" title="${t}">${i} — ${t.length > 34 ? t.slice(0, 32) + '…' : t}</option>`).join('');
+  const pOpts = '<option value="">—</option>' + d.pres.map((t, i) => `<option value="${'abcd'[i]}" title="${t}">${'abcd'[i]} — ${t.length > 30 ? t.slice(0, 28) + '…' : t}</option>`).join('');
+  return `<div style="background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);padding:8px">
+    <div style="font-size:11px;font-weight:700;margin-bottom:6px">${k} · ${({ D: 'Dehiscence', I: 'Inflammation/Infection', S: 'Seroma', H: 'Hematoma' })[k]}</div>
+    <label style="font-size:10px;color:var(--text3)">Intervention (0–4)</label>
+    <select id="${id}_${k}_i" onchange="dishChanged('${id}','${k}')" style="width:100%;margin-bottom:6px">${iOpts}</select>
+    <label style="font-size:10px;color:var(--text3)">Presentation (a–d)</label>
+    <select id="${id}_${k}_p" onchange="dishChanged('${id}')" style="width:100%" disabled>${pOpts}</select>
+  </div>`;
+}
+
+function addDishAssessment(data) {
+  const c = document.getElementById('dish-container'); if (!c) return;
+  const n = ++_dishCount, id = `dish_a${n}`;
+  const used = Array.from(c.querySelectorAll('select[id$="_tp"]')).map(s => s.value);
+  const nextTp = (data && data.tp) || (DISH_TP.map(t => t[0]).find(t => !used.includes(t)) || '');
+  const div = document.createElement('div');
+  div.id = `dish-panel-${n}`; div.dataset.n = n;
+  div.style.cssText = 'border:1px solid var(--border2);border-radius:var(--radius);padding:12px;margin-top:10px;background:var(--surface2)';
+  div.innerHTML = `
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
+      <div class="field" style="min-width:150px"><label>Time point</label>
+        <select id="${id}_tp" onchange="markDirty();dishChanged('${id}')">${DISH_TP.map(t => `<option value="${t[0]}">${t[1]}</option>`).join('')}</select></div>
+      <div class="field" style="width:130px"><label>Week post-op (พิมพ์เอง)</label>
+        <input type="number" id="${id}_week" min="0" step="0.5" placeholder="wk" oninput="markDirty();dishChanged('${id}')"></div>
+      <div class="field" style="flex:1;min-width:180px"><label>DISH code</label>
+        <input type="text" id="${id}_code" class="auto" readonly placeholder="—" style="font-weight:700;letter-spacing:.04em"></div>
+      <button type="button" onclick="removeDishAssessment(${n})" style="padding:6px 12px;background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:var(--radius);cursor:pointer;font-size:12px">ลบ</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px">${['D', 'I', 'S', 'H'].map(k => _dishSelects(null, k, id)).join('')}</div>
+    <div class="field" style="margin-top:8px"><label>Note</label><input type="text" id="${id}_note" placeholder="เช่น เจาะระบาย seroma 2 ครั้ง..." oninput="markDirty()"></div>`;
+  c.appendChild(div);
+  document.getElementById(`${id}_tp`).value = nextTp;
+  if (data) {
+    sv(`${id}_week`, data.week || ''); sv(`${id}_note`, data.note || '');
+    ['D', 'I', 'S', 'H'].forEach(k => { const d = data[k] || {}; sv(`${id}_${k}_i`, d.i == null ? '' : String(d.i)); dishChanged(id, k); sv(`${id}_${k}_p`, d.p || ''); });
+  }
+  dishChanged(id);
+  markDirty();
+}
+
+function removeDishAssessment(n) { const e = document.getElementById(`dish-panel-${n}`); if (e) e.remove(); dishChanged(); markDirty(); }
+
+// Intervention 0 / blank → presentation is not applicable (locked + cleared)
+function dishChanged(id, k) {
+  if (id && k) {
+    const i = document.getElementById(`${id}_${k}_i`), p = document.getElementById(`${id}_${k}_p`);
+    if (i && p) { const none = (i.value === '' || i.value === '0'); p.disabled = none; if (none) p.value = ''; }
+  }
+  if (id) {
+    const w = _dishWorst([collectOneDish(id)], 999);
+    sv(`${id}_code`, w ? _dishCode(w) : '');
+  }
+  markDirty();
+  renderDishSummary();
+}
+
+function collectOneDish(id) {
+  const g = x => (document.getElementById(`${id}_${x}`) || {}).value || '';
+  const o = { tp: g('tp'), week: g('week'), note: g('note') };
+  ['D', 'I', 'S', 'H'].forEach(k => { o[k] = { i: g(`${k}_i`), p: g(`${k}_p`) }; });
+  return o;
+}
+function collectDish() {
+  return Array.from(document.querySelectorAll('#dish-container [id^="dish-panel-"]')).map(div => collectOneDish(`dish_a${div.dataset.n}`));
+}
+function restoreDish(list) {
+  const c = document.getElementById('dish-container'); if (c) c.innerHTML = '';
+  _dishCount = 0;
+  (list || []).forEach(a => addDishAssessment(a));
+  renderDishSummary();
+}
+
+// Summary under the block: worst grade per domain inside the follow-up window
+function renderDishSummary() {
+  const el = document.getElementById('dish_summary'); if (!el) return;
+  const rec = { reconstruction_r: v('reconstruction_r'), reconstruction_l: v('reconstruction_l') };
+  const win = _compWindowWeeks(rec), list = collectDish();
+  const w = _dishWorst(list, win);
+  if (!list.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text3);margin-top:10px">ยังไม่มีการประเมิน — กด “+ เพิ่มการประเมิน” (ประเมินที่ discharge และตาม follow-up)</div>'; return; }
+  el.innerHTML = `<div style="margin-top:10px;padding:10px 12px;background:var(--surface3);border-radius:var(--radius);font-size:12px">
+    <b>ผลที่แย่ที่สุดของแต่ละโดเมน</b> (ภายใน ${win === 52 ? '1 ปี — มี reconstruction/implant' : '90 วัน (13 สัปดาห์) — ไม่มี reconstruction'}):
+    <span style="font-size:15px;font-weight:800;color:var(--teal);margin-left:8px;letter-spacing:.04em">${w ? _dishCode(w) : '(ไม่มีการประเมินในช่วงนี้)'}</span>
+    ${w && w.incomplete ? '<div style="color:#f59e0b;margin-top:4px">⚠️ มีบางโดเมนที่ยังไม่ได้เลือก Intervention</div>' : ''}</div>`;
+}
+
+function buildDishDefs() {
+  const el = document.getElementById('dish_defs'); if (!el) return;
+  const row = (k, name) => `<tr><td style="padding:4px 8px;vertical-align:top;font-weight:700">${k} ${name}</td>
+    <td style="padding:4px 8px;vertical-align:top">${DISH_DEF[k].int.map((t, i) => `<b>${i}</b> ${t}`).join('<br>')}</td>
+    <td style="padding:4px 8px;vertical-align:top">${DISH_DEF[k].pres.map((t, i) => `<b>${'abcd'[i]}</b> ${t}`).join('<br>')}</td></tr>`;
+  el.innerHTML = `<table style="border-collapse:collapse;width:100%"><thead><tr style="text-align:left;color:var(--text3)"><th style="padding:4px 8px">Domain</th><th style="padding:4px 8px">Intervention (what was done)</th><th style="padding:4px 8px">Presentation (what it looked like)</th></tr></thead><tbody>${row('D', 'Dehiscence')}${row('I', 'Infection')}${row('S', 'Seroma')}${row('H', 'Hematoma')}</tbody></table>`;
+}
+document.addEventListener('DOMContentLoaded', () => { buildDishDefs(); renderDishSummary(); });
 
 function calcRTDuration() {
   const s = vDate('date_rt_start'), e = vDate('date_rt_complete');
@@ -6619,7 +6787,7 @@ function collectData() {
     margin_loc:checkVals('margin_loc').join(', '),
     r1_procedure:radVal('r1_procedure'),r1_date:vd('r1_date'),final_margin:radVal('final_margin'),
     surgery_aim:v('surgery_aim'),surgery_memo:v('surgery_memo'),
-    complications_json:JSON.stringify(collectComplications()),surgery_note:v('surgery_note'),
+    complications_json:JSON.stringify(collectComplications()),dish_json:JSON.stringify(collectDish()),surgery_note:v('surgery_note'),
     ln_pn_override:v('ln_pn_override'),ene:radVal('ene'),ln_sum_note:v('ln_sum_note'),
     dcis_percent:v('dcis_percent'),dcis_grade:radVal('dcis_grade'),comedo:radVal('comedo'),
     tumor_bed_w:v('tumor_bed_w'),tumor_bed_l:v('tumor_bed_l'),
@@ -6848,6 +7016,7 @@ function loadData(d) {
   if (d.complications_json) {
     try { restoreComplications(JSON.parse(d.complications_json)); } catch(e) {}
   }
+  try { restoreDish(d.dish_json ? JSON.parse(d.dish_json) : []); } catch(e) { restoreDish([]); }
   // Legacy: old checkbox format
   if (d.complication && !d.complications_json) {
     const old = Array.isArray(d.complication) ? d.complication : [d.complication];
@@ -6923,6 +7092,7 @@ function clearForm() {
   restoreSpPanels([]);
   restoreStgPanels([]);
   restoreCmtSessions([]);
+  restoreDish([]);
   restoreHer2Sessions([]);
   buildTumorMarkers(null);
   refreshLesionSelectors();
@@ -7177,7 +7347,7 @@ function exportExcel() {
     immuno:'Immuno',immunotherapy_aim:'Immuno aim',immuno_memo:'Immuno memo',immuno_agent:'Immuno agent',pdl1_status:'PD-L1',
     ofs:'OFS',ofs_aim:'OFS aim',ofs_memo:'OFS memo',ofs_method:'OFS method',
     tox_neutropenia:'Tox:Neutro',tox_cardio:'Tox:Cardio',tox_neuropathy:'Tox:Neuro',tox_irae:'Tox:irAE',tox_hfs:'Tox:HFS',tox_myalgia:'Tox:Myalgia/Arthralgia',
-    complications_json:'Complications (JSON)',
+    complications_json:'Complications (JSON)',dish_json:'DISH assessments (JSON)',
     dose_reduction:'Dose reduction',tx_discontinue:'Discontinuation',
     echo_lvef_0:'Echo LVEF(baseline)',echo_lvef_pt:'Echo LVEF(post)',echo_lvef_6m:'Echo LVEF(6mo)',
     echo_lvef_12m:'Echo LVEF(12mo)',echo_lvef_18m:'Echo LVEF(18mo)',echo_lvef_24m:'Echo LVEF(24mo)',
@@ -7398,80 +7568,272 @@ function calcKpiDashboard() {
         <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text3)">เป้าหมาย</th>
       </tr></thead>
       <tbody>
-        ${row('KPI 2 — Stage 1+2 proportion', kpi.kpi2, 74)}
+        ${row('KPI 2 — Stage 1+2 (Stage 1–4 เท่านั้น)', kpi.kpi2, 74)}
         ${row('KPI 5 — Pathology ≤ 14 วัน', kpi.kpi5, 80)}
-        ${row('KPI 6.1 — ผ่าตัด ≤ 28 วัน', kpi.kpi61, 70)}
+        ${row('KPI 6.1 — ผ่าตัด ≤ 28 วัน (ทุกปีรวมกัน)', kpi.kpi61, 70)}
         ${row('KPI 6.2 — เริ่ม Chemo ≤ 42 วัน', kpi.kpi62, 70)}
         ${row('KPI 6.3 — เริ่ม RT ≤ 42 วัน', kpi.kpi63, 60)}
       </tbody>
     </table>`;
 }
 
-// ── Core KPI calculator (shared by mini-dashboard and full dashboard) ──
-function _calcAllKpi(recs) {
-  const kpi2={pass:0,total:0}, kpi5={pass:0,total:0};
-  const kpi61={pass:0,total:0}, kpi62={pass:0,total:0}, kpi63={pass:0,total:0};
-  const wait5=[], wait61=[], wait62=[], wait63=[];
+// ═══════════════════════════════════════════════════════════════
+// NCI KPI ENGINE — Service Plan สาขาโรคมะเร็ง ปีงบประมาณ 2569
+// One place that decides (a) each KPI's start/end dates, (b) which
+// year a patient is counted in.  Used by the Dashboard AND the
+// per-patient KPI boxes, so both always agree.
+//
+//  KPI 2   Stage 1–2 share   year = year of diagnosis; stages 1–4 only
+//  KPI 5   Pathology ≤14 d   biopsy date → pathology report; year = biopsy year
+//  KPI 6.1 Surgery ≤28 d     start = last day of earlier chemo/RT, else biopsy
+//                            (else imaging) date → surgery; year = surgery year
+//  KPI 6.2 Chemo ≤42 d       start = last day of earlier surgery/RT, else biopsy
+//                            (else imaging) → FIRST chemo day; year = that day's year
+//  KPI 6.3 RT ≤42 d          start = last day of earlier surgery/chemo, else biopsy
+//   (=KPI 3)                 (else imaging) → first RT day; year = that day's year
+// ═══════════════════════════════════════════════════════════════
+const KPI_DEFS = [
+  { id:'k2',  label:'KPI 2 — Stage 1+2 (รายใหม่ในปี)',  target:74, limit:null },
+  { id:'k5',  label:'KPI 5 — พยาธิวิทยา ≤ 14 วัน',      target:80, limit:14 },
+  { id:'k61', label:'KPI 6.1 — ผ่าตัด ≤ 28 วัน',        target:70, limit:28 },
+  { id:'k62', label:'KPI 6.2 — เคมีบำบัด ≤ 42 วัน',      target:70, limit:42 },
+  { id:'k63', label:'KPI 6.3 / KPI 3 — รังสีรักษา ≤ 42 วัน', target:60, limit:42 },
+];
+const KPI_MAXDAYS = { k5:365, k61:3650, k62:3650, k63:3650 };
 
-  recs.forEach(r => {
-    const stage = (r.stage_overall||'').trim().toUpperCase();
-    if (stage) { kpi2.total++; if(['0','IA','IB','IIA','IIB'].includes(stage)) kpi2.pass++; }
+// "2025-10-01" → {y,m,d,t}.  Anything that is not a real date → null.
+function _ymd(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s == null ? '' : s).trim());
+  if (!m) return null;
+  let y = +m[1]; const mo = +m[2], d = +m[3];
+  if (y > 2400) y -= 543;                       // Buddhist-era slip
+  if (y < 1900 || y > 2100 || mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  return { y, m: mo, d, t: Date.UTC(y, mo - 1, d) };
+}
+const _kDays = (a, b) => Math.round((b.t - a.t) / 86400000);
+const _kMin  = arr => arr.filter(Boolean).sort((a, b) => a.t - b.t)[0] || null;
+const _kMax  = arr => arr.filter(Boolean).sort((a, b) => b.t - a.t)[0] || null;
+// Year a date belongs to.  calendar: 1 Jan–31 Dec.  fiscal: 1 Oct–30 Sep (named by the year it ends in).
+function _kYear(d, mode) { return mode === 'fiscal' ? (d.m >= 10 ? d.y + 1 : d.y) : d.y; }
 
-    const bxDate  = r.bx_date||'';
-    const bxPatho = r.bx_patho_date||'';
-    if (_dashValidDate(bxDate) && _dashValidDate(bxPatho)) {
-      const d = _dashDays(bxDate,bxPatho);
-      if (d>=0 && d<=365) { kpi5.total++; wait5.push(d); if(d<=14) kpi5.pass++; }
+// Pull every date the KPIs need out of one patient record
+function _kFacts(r) {
+  let panels = [], ss = [];
+  try { panels = r.bx_panels_json ? JSON.parse(r.bx_panels_json) : []; } catch (e) {}
+  try { ss = r.cmt_sessions_json ? JSON.parse(r.cmt_sessions_json) : []; } catch (e) {}
+  if (!ss.length && r.date_cmt) ss = [{ aim: r.chemo_aim || '', date_start: r.date_cmt, date_end: r.date_cmt_end || '' }];
+  const f = {};
+  f.bx     = _kMin([_ymd(r.bx_date)].concat(panels.map(p => _ymd(p.bx_date))));
+  f.report = _ymd(r.bx_patho_date) || _kMin(panels.map(p => _ymd(p.bx_patho_date)));
+  f.dx     = _ymd(r.date_dx) || f.report;
+  f.img    = _ymd(r.date_imaging);
+  f.or     = _ymd(r.date_or);
+  f.rtS    = /deny|refer/i.test(r.rt_aim || '') ? null : _ymd(r.date_rt_start);
+  f.rtE    = _ymd(r.date_rt_complete);
+  // Chemo sessions that count as "chemo received" (not refused/referred, not 2nd-line+ palliative)
+  f.cmt = ss.map(s => ({ s: _ymd(s.date_start), e: _ymd(s.date_end), aim: s.aim || '' }))
+            .filter(c => c.s && !/deny|refer|2nd/i.test(c.aim));
+  f.stage = String(r.stage_overall || '').trim().toUpperCase();
+  f.base  = f.bx || f.img;          // where the clock starts when nothing came before
+  return f;
+}
+
+// Last day of a treatment; if the end date is missing, the start date is used (flagged "approx")
+function _kEnd(start, end, lbl) { return (end && end.t >= start.t) ? { d: end, approx: false, lbl } : { d: start, approx: true, lbl }; }
+
+function _kResult(ev, start, limit, key, from) {
+  if (!ev) return { status: 'nodate' };
+  if (!start) return { ev, status: 'nostart' };
+  const days = _kDays(start, ev);
+  if (days < 0) return { ev, days, status: 'negative' };
+  if (days > KPI_MAXDAYS[key]) return { ev, days, status: 'implausible' };
+  return { ev, days, status: 'ok', pass: days <= limit, from };
+}
+
+// All KPI results for ONE patient: { k2, k5, k61, k62, k63 }  (a key is absent when the patient is not in that KPI's denominator at all)
+function _kpiPatient(r) {
+  const f = _kFacts(r), res = {};
+  // ── KPI 2 ──
+  const s12 = ['IA','IB','IIA','IIB'], s34 = ['IIIA','IIIB','IIIC','IV'];
+  if (!f.dx) res.k2 = { status: 'nodate' };
+  else if (s12.includes(f.stage) || s34.includes(f.stage)) res.k2 = { ev: f.dx, status: 'ok', pass: s12.includes(f.stage) };
+  else res.k2 = { ev: f.dx, status: f.stage === '0' ? 'stage0' : 'nostage' };
+  // ── KPI 5 ── (year = year the specimen was taken)
+  if (f.bx || f.report) {
+    if (!f.bx || !f.report) res.k5 = { ev: f.bx, status: 'nodate' };
+    else {
+      const days = _kDays(f.bx, f.report);
+      res.k5 = days < 0 ? { ev: f.bx, days, status: 'negative' }
+             : days > KPI_MAXDAYS.k5 ? { ev: f.bx, days, status: 'implausible' }
+             : { ev: f.bx, days, status: 'ok', pass: days <= 14, from: 'ตัดชิ้นเนื้อ' };
     }
+  }
+  // ── KPI 6.1 ── surgery
+  if (f.or) {
+    const prior = f.cmt.filter(c => c.s.t < f.or.t).map(c => _kEnd(c.s, c.e, 'วันสุดท้ายของเคมี'));
+    if (f.rtS && f.rtS.t < f.or.t) prior.push(_kEnd(f.rtS, f.rtE, 'วันสุดท้ายของรังสี'));
+    const last = prior.length ? prior.sort((a, b) => b.d.t - a.d.t)[0] : null;
+    res.k61 = _kResult(f.or, last ? last.d : f.base, 28, 'k61', last ? last.lbl : (f.bx ? 'ตัดชิ้นเนื้อ' : 'วันตรวจภาพถ่าย'));
+    if (last && last.approx) res.k61.approx = true;
+  }
+  // ── KPI 6.2 ── first chemo
+  if (f.cmt.length) {
+    const first = f.cmt.slice().sort((a, b) => a.s.t - b.s.t)[0].s;
+    const prior = [];
+    if (f.or && f.or.t < first.t) prior.push({ d: f.or, approx: false, lbl: 'วันผ่าตัด' });
+    if (f.rtS && f.rtS.t < first.t) prior.push(_kEnd(f.rtS, f.rtE, 'วันสุดท้ายของรังสี'));
+    const last = prior.length ? prior.sort((a, b) => b.d.t - a.d.t)[0] : null;
+    res.k62 = _kResult(first, last ? last.d : f.base, 42, 'k62', last ? last.lbl : (f.bx ? 'ตัดชิ้นเนื้อ' : 'วันตรวจภาพถ่าย'));
+    if (last && last.approx) res.k62.approx = true;
+  }
+  // ── KPI 6.3 ── first radiotherapy day
+  if (f.rtS) {
+    const prior = [];
+    if (f.or && f.or.t < f.rtS.t) prior.push({ d: f.or, approx: false, lbl: 'วันผ่าตัด' });
+    f.cmt.filter(c => c.s.t < f.rtS.t).forEach(c => prior.push(_kEnd(c.s, c.e, 'วันสุดท้ายของเคมี')));
+    const last = prior.length ? prior.sort((a, b) => b.d.t - a.d.t)[0] : null;
+    res.k63 = _kResult(f.rtS, last ? last.d : f.base, 42, 'k63', last ? last.lbl : (f.bx ? 'ตัดชิ้นเนื้อ' : 'วันตรวจภาพถ่าย'));
+    if (last && last.approx) res.k63.approx = true;
+  }
+  return res;
+}
 
-    const dx  = r.bx_patho_date||r.date_dx||'';
-    const ord = r.date_or||'';
-    if (_dashValidDate(dx) && _dashValidDate(ord)) {
-      const d = _dashDays(dx,ord);
-      if (d>=0 && d<=3650) { kpi61.total++; wait61.push(d); if(d<=28) kpi61.pass++; }
-    }
-
-    // KPI 6.2: use cmt_sessions_json — find earliest Adjuvant/Consolidation start
-    let cmtKpiDate = '';
-    let cmtLastEndDash = '';
-    try {
-      const sessions = r.cmt_sessions_json ? JSON.parse(r.cmt_sessions_json) : [];
-      sessions.forEach(s => {
-        if (!s.date_start) return;
-        const aim = (s.aim||'').toLowerCase();
-        if (aim.includes('adjuvant') || aim.includes('consolidation')) {
-          if (!cmtKpiDate || s.date_start < cmtKpiDate) cmtKpiDate = s.date_start;
-        }
-        if (!cmtKpiDate && (!r.date_or || s.date_start > (r.date_or||''))) {
-          // fallback: any CMT after surgery
-          if (!cmtKpiDate || s.date_start < cmtKpiDate) cmtKpiDate = s.date_start;
-        }
-        if (s.date_end && s.date_end > cmtLastEndDash) cmtLastEndDash = s.date_end;
+// Add up all patients.  mode: 'calendar' | 'fiscal'.
+// Returns { years:[sorted], by:{ year:{ k2:{pass,total,days:[]}, ... } }, all:{...}, excl:{ kpi:{reason:count} }, issues:[...] }
+function _kpiAggregate(recs, mode) {
+  const blank = () => { const o = {}; KPI_DEFS.forEach(k => o[k.id] = { pass: 0, total: 0, days: [], approx: 0 }); return o; };
+  const out = { by: {}, all: blank(), excl: {}, issues: [], years: [] };
+  KPI_DEFS.forEach(k => out.excl[k.id] = {});
+  const yrs = new Set();
+  (recs || []).forEach(r => {
+    const res = _kpiPatient(r);
+    KPI_DEFS.forEach(k => {
+      const x = res[k.id]; if (!x) return;
+      if (x.status !== 'ok') {
+        out.excl[k.id][x.status] = (out.excl[k.id][x.status] || 0) + 1;
+        if (x.status === 'negative' || x.status === 'implausible')
+          out.issues.push({ hn: r.hn || '', name: ((r.firstname || '') + ' ' + (r.lastname || '')).trim(), kpi: k.id, status: x.status, days: x.days });
+        return;
+      }
+      const y = _kYear(x.ev, mode); yrs.add(y);
+      const by = out.by[y] || (out.by[y] = blank());
+      [by[k.id], out.all[k.id]].forEach(c => {
+        c.total++; if (x.pass) c.pass++; if (x.days != null) c.days.push(x.days); if (x.approx) c.approx++;
       });
-    } catch(e) {}
-    // Legacy fallback for old records without sessions JSON
-    if (!cmtKpiDate) cmtKpiDate = r.date_cmt||'';
-    const cmt = cmtKpiDate;
-    if (_dashValidDate(ord) && _dashValidDate(cmt)) {
-      const d = _dashDays(ord,cmt);
-      if (d>=0 && d<=1825) { kpi62.total++; wait62.push(d); if(d<=42) kpi62.pass++; }
-    }
-
-    const rtStart   = r.date_rt_start||'';
-    const cmtRefDash = cmtLastEndDash || cmt;
-    const lastPrior = _dashLater(ord,cmtRefDash);
-    if (_dashValidDate(lastPrior) && _dashValidDate(rtStart)) {
-      const d = _dashDays(lastPrior,rtStart);
-      if (d>=0 && d<=1825) { kpi63.total++; wait63.push(d); if(d<=42) kpi63.pass++; }
-    }
+    });
   });
-  return { kpi2, kpi5, kpi61, kpi62, kpi63, wait5, wait61, wait62, wait63 };
+  out.years = Array.from(yrs).sort((a, b) => a - b);
+  return out;
+}
+
+// ── Year mode for the Dashboard: 'calendar' (default) or 'fiscal' (1 Oct–30 Sep) ──
+let _dashYearMode = 'calendar';
+function setDashYearMode(m) { _dashYearMode = (m === 'fiscal') ? 'fiscal' : 'calendar'; renderDashboard(); }
+// Label for a year column.  calendar 2025 → "พ.ศ. 2568"; fiscal 2026 → "ปีงบ 2569"
+function _kYearLabel(y, mode) { return (mode === 'fiscal' ? 'ปีงบ ' : 'พ.ศ. ') + (y + 543); }
+
+// ── Core KPI calculator (all years together; shared by mini-dashboard and full dashboard) ──
+function _calcAllKpi(recs) {
+  const a = _kpiAggregate(recs, 'calendar').all;
+  const c = id => ({ pass: a[id].pass, total: a[id].total });
+  return { kpi2: c('k2'), kpi5: c('k5'), kpi61: c('k61'), kpi62: c('k62'), kpi63: c('k63'),
+           wait5: a.k5.days, wait61: a.k61.days, wait62: a.k62.days, wait63: a.k63.days };
+}
+
+// ── Per-year complication table: old system and DISH ──
+function _compTableHTML(recs, mode) {
+  const agg = _compAggregate(recs, mode);
+  if (!agg.years.length) return '<div style="color:var(--text3);font-size:13px">ยังไม่มีผู้ป่วยที่มีทั้งวันผ่าตัดและข้อมูล complication</div>';
+  const cols = agg.years.map(y => ({ key: y, label: _kYearLabel(y, mode), d: agg.by[y] })).concat([{ key: 'all', label: 'รวมทุกปี', d: agg.all }]);
+  const th = 'padding:8px 10px;font-size:11px;color:var(--text3);text-align:center;border-bottom:1px solid var(--border2);white-space:nowrap';
+  const td = 'padding:6px 10px;text-align:center;border-bottom:1px solid var(--border2)';
+  const cell = (c, sys, k) => {
+    const n = c.d[sys].n; if (!n) return `<td style="${td};color:var(--text3)">—</td>`;
+    const x = c.d[sys][k] || 0, pct = x / n * 100;
+    return `<td style="${td}${c.key === 'all' ? ';background:var(--surface3)' : ''}"><span style="font-weight:700">${pct.toFixed(1)}%</span> <span style="font-size:11px;color:var(--text3)">${x}/${n}</span>${n < 10 ? '<div style="font-size:10px;color:var(--text3);font-style:italic">n น้อย</div>' : ''}</td>`;
+  };
+  const head = cols.map(c => `<th style="${th}${c.key === 'all' ? ';background:var(--surface3)' : ''}">${c.label}</th>`).join('');
+  const group = (title, sys, rows) => `<tr><td colspan="${cols.length + 1}" style="padding:8px 10px;font-size:12px;font-weight:700;color:var(--teal);background:var(--surface2)">${title}</td></tr>` +
+    rows.map(([k, lbl]) => `<tr><td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border2);min-width:230px">${lbl}</td>${cols.map(c => cell(c, sys, k)).join('')}</tr>`).join('');
+  const nRow = (lbl, sys) => `<tr><td style="padding:6px 10px;font-size:11px;color:var(--text3)">${lbl}</td>${cols.map(c => `<td style="padding:6px 10px;text-align:center;font-size:11px;color:var(--text3)">${c.d[sys].n}</td>`).join('')}</tr>`;
+  const a = agg.all.cmp;
+  const cmpTxt = a.n ? `<b>เปรียบเทียบผู้ป่วยที่ถูกประเมินทั้ง 2 ระบบ (${a.n} ราย)</b> — เฉพาะส่วนที่ DISH ครอบคลุม (Seroma / Wound infection / Hematoma ในระบบเดิม เทียบกับ DISH ≥1 ใดๆ):
+      ตรงกัน ${a.agree} ราย (${(a.agree / a.n * 100).toFixed(0)}%) · DISH พบแต่ระบบเดิมไม่พบ ${a.dishOnly} ราย · ระบบเดิมพบแต่ DISH ไม่พบ ${a.oldOnly} ราย`
+    : 'ยังไม่มีผู้ป่วยที่ถูกประเมินทั้ง 2 ระบบ — เมื่อเริ่มกรอก DISH จะแสดงการเปรียบเทียบตรงนี้';
+  return `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="${th};text-align:left">รายการ</th>${head}</tr></thead><tbody>
+      ${group('ระบบเดิม (Clavien-Dindo / CTCAE)', 'old', COMP_ROWS_OLD)}${nRow('จำนวนผู้ป่วยที่ถูกประเมิน (n)', 'old')}
+      ${group('DISH (Bond-Smith 2026) — ผลที่แย่ที่สุดของผู้ป่วยแต่ละราย', 'dish', COMP_ROWS_DISH)}${nRow('จำนวนผู้ป่วยที่ถูกประเมิน (n)', 'dish')}
+    </tbody></table></div>
+    <div style="margin-top:10px;padding:10px 12px;background:var(--surface2);border-radius:var(--radius);font-size:12px;line-height:1.7">${cmpTxt}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.7">
+      <b>นับผู้ป่วยเข้าปีไหน:</b> ปีที่ผ่าตัด (ใช้ปฏิทิน/ปีงบประมาณตามปุ่มด้านบน). ผู้ป่วยที่ไม่มีวันผ่าตัดแต่มีข้อมูล complication: ${agg.noSurgery} ราย (ไม่ถูกนับ)<br>
+      <b>ช่วงติดตามที่นับ:</b> 90 วัน (13 สัปดาห์) หลังผ่าตัด; 1 ปี ถ้ามี reconstruction/implant — เหตุการณ์ที่ไม่ได้ใส่สัปดาห์ที่เกิดจะถูกนับเสมอ<br>
+      <b>ตัวหาร:</b> เฉพาะผู้ป่วยที่ถูกประเมินในระบบนั้น (ระบบเดิม = ติ๊ก “ไม่มี” หรือเลือก complication · DISH = มีการประเมินอย่างน้อย 1 ครั้ง)<br>
+      Clavien-Dindo ≥ IIIa นับจาก Wound infection / Hematoma / Flap necrosis / DVT / Other (Seroma และ Lymphedema ใช้ CTCAE จึงไม่รวม)
+    </div>`;
+}
+
+// ── Per-year KPI comparison table ──
+function _kpiYearTableHTML(recs, mode) {
+  const agg = _kpiAggregate(recs, mode);
+  const cols = agg.years.map(y => ({ key: y, label: _kYearLabel(y, mode), get: id => (agg.by[y] || {})[id] }))
+                        .concat([{ key: 'all', label: 'รวมทุกปี', get: id => agg.all[id] }]);
+  const th = 'padding:8px 10px;font-size:11px;color:var(--text3);text-align:center;border-bottom:1px solid var(--border2);white-space:nowrap';
+  const colorFor = (pct, target) => pct >= target ? '#22c55e' : (pct >= target - 10 ? '#f59e0b' : '#ef4444');
+  const rows = KPI_DEFS.map(def => {
+    let prevPct = null, prevYear = null;
+    const cells = cols.map(c => {
+      const x = c.get(def.id);
+      if (!x || !x.total) { if (c.key !== 'all') { prevPct = null; prevYear = null; } return `<td style="padding:8px 10px;text-align:center;color:var(--text3);border-bottom:1px solid var(--border2)">—</td>`; }
+      const pct = x.pass / x.total * 100, col = colorFor(pct, def.target);
+      let delta = '';
+      if (c.key !== 'all') {
+        if (prevPct !== null && prevYear === c.key - 1) { const d = pct - prevPct; delta = `<div style="font-size:10px;color:${d >= 0 ? '#22c55e' : '#ef4444'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)} จุด</div>`; }
+        prevPct = pct; prevYear = c.key;
+      }
+      const med = (def.id !== 'k2' && x.days.length) ? `<div style="font-size:10px;color:var(--text3)">median ${_dashMedian(x.days)} วัน</div>` : '';
+      const small = x.total < 10 ? `<div style="font-size:10px;color:var(--text3);font-style:italic">n น้อย</div>` : '';
+      const bg = c.key === 'all' ? 'background:var(--surface3);' : '';
+      return `<td style="${bg}padding:8px 10px;text-align:center;border-bottom:1px solid var(--border2)">
+        <div style="font-size:15px;font-weight:800;color:${col}">${pct.toFixed(1)}%</div>
+        <div style="font-size:11px;color:var(--text2)">${x.pass}/${x.total}</div>${med}${delta}${small}</td>`;
+    }).join('');
+    return `<tr><td style="padding:8px 10px;border-bottom:1px solid var(--border2);font-size:13px;min-width:210px">${def.label}
+      <div style="font-size:10px;color:var(--text3)">เป้าหมาย ≥ ${def.target}%</div></td>${cells}</tr>`;
+  }).join('');
+  const head = cols.map(c => `<th style="${th}${c.key === 'all' ? ';background:var(--surface3)' : ''}">${c.label}</th>`).join('');
+
+  // not-counted summary
+  const why = { nodate:'ไม่มีวันที่ที่ต้องใช้', nostart:'ไม่มีวันเริ่มนับ', negative:'วันที่เรียงผิดลำดับ', implausible:'ช่วงเวลาไม่สมเหตุสมผล', stage0:'Stage 0 (ไม่นับ)', nostage:'ไม่ระบุ stage' };
+  const nc = KPI_DEFS.map(def => {
+    const e = agg.excl[def.id], parts = Object.keys(e).map(k => `${why[k] || k} ${e[k]}`);
+    return parts.length ? `<li><b>${def.label.split(' — ')[0]}</b>: ${parts.join(' · ')}</li>` : '';
+  }).join('');
+  const approxN = KPI_DEFS.reduce((n, d) => n + agg.all[d.id].approx, 0);
+  const issues = agg.issues.length ? `<details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:#f59e0b">⚠️ ราย ${agg.issues.length} รายการที่วันที่ผิดปกติ — กดดูเลข HN เพื่อไปแก้</summary>
+      <div style="font-size:12px;margin-top:6px;line-height:1.7">${agg.issues.map(i => `HN ${i.hn || '—'} (${i.kpi.replace('k', 'KPI ').replace(/^KPI (\d)(\d)$/, 'KPI $1.$2')} · ${why[i.status]}${i.days != null ? ' · ' + i.days + ' วัน' : ''})`).join('<br>')}</div></details>` : '';
+
+  const btn = (m, t) => `<button type="button" onclick="setDashYearMode('${m}')" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border2);cursor:pointer;font-size:12px;${mode === m ? 'background:var(--teal);color:#fff;font-weight:700' : 'background:var(--surface2);color:var(--text2)'}">${t}</button>`;
+  return `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      <span style="font-size:12px;color:var(--text3)">แบ่งปีแบบ:</span>${btn('calendar', 'ปีปฏิทิน (1 ม.ค.–31 ธ.ค.)')}${btn('fiscal', 'ปีงบประมาณ (1 ต.ค.–30 ก.ย.)')}
+    </div>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="${th};text-align:left">KPI</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.7">
+      <b>ผู้ป่วยถูกนับเข้าปีใด (ตามเกณฑ์ NCI):</b> KPI 2 = ปีที่วินิจฉัย · KPI 5 = ปีที่เจาะชิ้นเนื้อ · KPI 6.1 = ปีที่ผ่าตัด · KPI 6.2 = ปีที่เริ่มเคมีครั้งแรก · KPI 6.3 = ปีที่เริ่มรังสีครั้งแรก<br>
+      <b>จุดเริ่มนับวัน:</b> KPI 5 จากวันเจาะชิ้นเนื้อ · KPI 6.1/6.2/6.3 จาก “วันสุดท้ายของการรักษาก่อนหน้า” (ผ่าตัด/เคมี/รังสี) ถ้าไม่มีให้นับจากวันเจาะชิ้นเนื้อ (ถ้าไม่มีใช้วันตรวจภาพถ่าย) · KPI 2 นับเฉพาะ Stage 1–4<br>
+      ▲▼ = เทียบกับปีก่อนหน้า (หน่วย: จุดเปอร์เซ็นต์) · “n น้อย” = มีผู้ป่วยน้อยกว่า 10 ราย ตัวเลขยังไม่น่าเชื่อถือ
+    </div>
+    <div style="margin-top:12px;padding:10px 12px;background:var(--surface2);border-radius:var(--radius);font-size:12px">
+      <b>ไม่ถูกนับ (ไม่มีข้อมูลพอ):</b>
+      <ul style="margin:6px 0 0 18px;padding:0;line-height:1.7">${nc || '<li>ไม่มี</li>'}</ul>
+      ${approxN ? `<div style="margin-top:4px;color:var(--text3)">ℹ️ ${approxN} รายการไม่มีวันสิ้นสุดของการรักษาก่อนหน้า จึงใช้วันเริ่มรักษาแทน</div>` : ''}${issues}
+    </div>`;
 }
 
 // ── Full Department Dashboard (Tab 6) ────────────────────────────
 function renderDashboard() {
   if (!records.length) {
-    ['dash_cards','dash_kpi','dash_stage','dash_subtype','dash_age','dash_year','dash_wait']
+    ['dash_cards','dash_kpi','dash_comp','dash_stage','dash_subtype','dash_age','dash_year','dash_wait']
       .forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML='<div style="color:var(--text3);font-size:13px;padding:8px">ยังไม่มีข้อมูล</div>'; });
     return;
   }
@@ -7498,30 +7860,9 @@ function renderDashboard() {
     card(kpi.kpi2.total ? (kpi.kpi2.pass/kpi.kpi2.total*100).toFixed(0)+'%' : '—','Stage 1+2 (KPI2)','#22c55e') +
     card(kpi.kpi61.total ? (kpi.kpi61.pass/kpi.kpi61.total*100).toFixed(0)+'%' : '—','ผ่าตัด ≤28วัน (KPI6.1)','#f59e0b');
 
-  // ── KPI table with progress bars ──────────────────────────────
-  const kpiRow = (label, k, target, color) => {
-    if (!k.total) return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border2)">
-      <div style="width:220px;font-size:13px">${label}</div>
-      <div style="color:var(--text3);font-size:12px">ไม่มีข้อมูล</div></div>`;
-    const pct = k.pass/k.total*100;
-    const met = pct >= target;
-    const barColor = met ? '#22c55e' : (pct >= target-10 ? '#f59e0b' : '#ef4444');
-    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border2)">
-      <div style="width:220px;font-size:13px">${label}</div>
-      <div style="flex:1;display:flex;align-items:center;gap:8px">
-        ${_dashBar(pct,barColor,12)}
-        <span style="font-size:13px;font-weight:700;color:${barColor};min-width:42px">${pct.toFixed(1)}%</span>
-      </div>
-      <div style="font-size:12px;color:var(--text3);min-width:100px">${k.pass}/${k.total} · เป้า≥${target}%</div>
-      <div>${met?'✅':'⚠️'}</div>
-    </div>`;
-  };
-  document.getElementById('dash_kpi').innerHTML =
-    kpiRow('KPI 2 — Stage 1+2 proportion', kpi.kpi2, 74) +
-    kpiRow('KPI 5 — Pathology ≤ 14 วัน', kpi.kpi5, 80) +
-    kpiRow('KPI 6.1 — ผ่าตัด ≤ 28 วัน จาก Dx', kpi.kpi61, 70) +
-    kpiRow('KPI 6.2 — เริ่ม Chemo ≤ 42 วัน', kpi.kpi62, 70) +
-    kpiRow('KPI 6.3 — เริ่ม RT ≤ 42 วัน', kpi.kpi63, 60);
+  // ── KPI per year (NCI FY2569) ─────────────────────────────────
+  document.getElementById('dash_kpi').innerHTML = _kpiYearTableHTML(records, _dashYearMode);
+  document.getElementById('dash_comp').innerHTML = _compTableHTML(records, _dashYearMode);
 
   // ── Stage distribution ────────────────────────────────────────
   const stageBuckets = {'Stage 0':0,'Stage I':0,'Stage II':0,'Stage III':0,'Stage IV':0,'ไม่ระบุ':0};
@@ -7597,13 +7938,13 @@ function renderDashboard() {
     </div>`;
   }).join('');
 
-  // ── Cases per year ────────────────────────────────────────────
+  // ── Cases per year (by diagnosis date, same year type as KPI table) ──
   const yearCounts = {};
   records.forEach(r => {
-    const dx = r.bx_patho_date||r.date_dx||'';
+    const dx = _kFacts(r).dx;
     if (!dx) return;
-    const y = new Date(dx).getFullYear();
-    if (y>=2000 && y<=2100) yearCounts[y] = (yearCounts[y]||0)+1;
+    const y = _kYear(dx, _dashYearMode);
+    yearCounts[y] = (yearCounts[y]||0)+1;
   });
   const maxYear = Math.max(...Object.values(yearCounts),1);
   document.getElementById('dash_year').innerHTML = Object.entries(yearCounts)
@@ -7611,7 +7952,7 @@ function renderDashboard() {
     const pct = cnt/maxYear*100;
     return `<div style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-        <span>พ.ศ. ${parseInt(yr)+543}</span><span>${cnt} ราย</span>
+        <span>${_kYearLabel(parseInt(yr), _dashYearMode)}</span><span>${cnt} ราย</span>
       </div>
       ${_dashBar(pct,'#34d399',14)}
     </div>`;
@@ -7633,10 +7974,10 @@ function renderDashboard() {
     </div>`;
   };
   document.getElementById('dash_wait').innerHTML =
-    wtRow('KPI 5 — Biopsy → Pathology report', kpi.wait5, 14) +
-    wtRow('KPI 6.1 — Diagnosis → Surgery', kpi.wait61, 28) +
-    wtRow('KPI 6.2 — Surgery → Chemo start', kpi.wait62, 42) +
-    wtRow('KPI 6.3 — Prior treatment → RT start', kpi.wait63, 42);
+    wtRow('KPI 5 — เจาะชิ้นเนื้อ → ผลพยาธิ (ทุกปีรวมกัน)', kpi.wait5, 14) +
+    wtRow('KPI 6.1 — จุดเริ่มนับ → ผ่าตัด', kpi.wait61, 28) +
+    wtRow('KPI 6.2 — จุดเริ่มนับ → เริ่มเคมีครั้งแรก', kpi.wait62, 42) +
+    wtRow('KPI 6.3 — จุดเริ่มนับ → เริ่มรังสีครั้งแรก', kpi.wait63, 42);
 
   document.getElementById('dash_updated').textContent =
     `อัปเดต ${new Date().toLocaleString('th-TH')} · ${n} ราย`;
