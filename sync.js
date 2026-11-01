@@ -1,5 +1,5 @@
 // ============================================================
-//  BCA Registry Taksin — Google Sheets Sync  (sync.js)  v3
+//  BCA Registry Taksin — Google Sheets Sync  (sync.js)  v3.1
 //  Loaded by index.html via <script src="sync.js"></script>
 //
 //  SAFE VERSION: this file contains NO web address and NO passcode.
@@ -77,14 +77,8 @@ async function loadFromSheets() {
   setBadge('loading', '⟳ กำลังโหลด…');
   pendingUpload = [];
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20000);
-    const res = await fetch(
-      APPS_SCRIPT_URL + '?action=getAll&key=' + encodeURIComponent(APPS_SCRIPT_KEY) + '&t=' + Date.now(),
-      { signal: controller.signal, redirect: 'follow' });
-    clearTimeout(timer);
-    const data = _parse(await res.text());
-    if (data.status === 'error') throw new Error(data.error);
+    // v2.3: POST (passcode travels in the request body, not in the web address)
+    const data = await _post({ action: 'getAll' }, 30000);
 
     const remote = (data.records || [])
       .filter(r => r._id || r.id)
@@ -117,6 +111,7 @@ async function loadFromSheets() {
     console.warn('Sheets load failed:', err.message);
     isOnline = false;
     let reason = err.name === 'AbortError' ? 'timeout' : err.message.slice(0, 40);
+    if (/load failed|failed to fetch|networkerror|network request/i.test(err.message)) reason = 'ติดต่อไม่ได้ · แตะเพื่อทดสอบ';
     if (/passcode|รหัส|unauthor/i.test(err.message)) reason = 'รหัสผ่านไม่ถูกต้อง';
     setBadge('warn', `⚠️ ออฟไลน์ (${reason}) — ในเครื่อง ${records.length} ราย`);
     return false;
