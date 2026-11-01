@@ -669,6 +669,11 @@
 .flag-note{font-size:12px;margin:-4px 0 14px;padding:6px 12px;border-radius:8px;border:1px solid var(--border2);color:var(--text2)}
 .flag-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
 .flag-legend{font-size:10px;color:var(--text3);padding:6px 14px 0;line-height:1.5}
+
+.float-save{position:fixed;right:24px;bottom:84px;z-index:900;display:none;align-items:center;gap:8px;border:none;border-radius:999px;padding:11px 20px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.45);background:var(--teal);color:#06201f}
+.float-save.dirty{background:var(--gold);color:#201a06}
+.float-save .fs-state{font-size:11px;font-weight:600;opacity:.85}
+@media print{.float-save{display:none!important}}
 </style>
 </head>
 <body>
@@ -751,12 +756,12 @@
         Diagnosis & Staging
       </button>
       <button class="tab-btn" onclick="switchTab(6)" id="tab6">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Survival & Outcome
-      </button>
-      <button class="tab-btn" onclick="switchTab(7)" id="tab7">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 9 9 9"/></svg>
         Recurrent
+      </button>
+      <button class="tab-btn" onclick="switchTab(7)" id="tab7">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Survival & Outcome
       </button>
     </nav>
 
@@ -3765,9 +3770,135 @@
     </div><!-- end panel4 -->
 
     <!-- ══════════════════════════════════════════ -->
-    <!-- TAB 5: Survival & Outcome -->
+    <!-- TAB 6: Recurrent -->
     <!-- ══════════════════════════════════════════ -->
     <div class="tab-panel" id="panel6">
+      <h2 class="section-title">Recurrent / Metastatic Disease</h2>
+      <p class="section-subtitle">กลับเป็นซ้ำ หรือแพร่กระจาย — ผู้ป่วยบางรายเกิดหลังวินิจฉัยหลายเดือน–หลายปี จึงแสดงแท็บนี้ตลอด · ถ้าไม่มีให้เว้นว่างได้</p>
+
+      <div class="subsection" style="border-left:3px solid var(--accent)">
+        <div class="subsection-title">Basic information</div>
+        <div class="form-grid g3">
+          <div class="field">
+            <label>Metastasis at diagnosis (de novo)</label>
+            <div class="radio-group">
+              <label><input type="radio" name="rec_met_at_dx" value="yes" onchange="markDirty()"> Yes</label>
+              <label><input type="radio" name="rec_met_at_dx" value="no" onchange="markDirty()"> No</label>
+            </div>
+          </div>
+          <div class="field">
+            <label>Pattern of recurrence</label>
+            <div class="check-group">
+              <label><input type="checkbox" name="rec_type" value="local" onchange="calcSurvival();recPatternUpdate()"> Local</label>
+              <label><input type="checkbox" name="rec_type" value="regional" onchange="calcSurvival();recPatternUpdate()"> Regional</label>
+              <label><input type="checkbox" name="rec_type" value="distant" onchange="calcSurvival();recPatternUpdate()"> Distant</label>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">สรุป: <b id="rec_pattern_display" style="color:var(--teal)">—</b> <span>(Local/Regional = Locoregional)</span></div>
+          </div>
+          <div class="field">
+            <label>Date of recurrence / metastasis</label>
+            <input type="text" id="date_recurrence" class="date-input" placeholder="วว/ดด/พ.ศ."
+              maxlength="10" autocomplete="off"
+              oninput="onThaiDateInput(this, ()=>{ calcSurvival() })">
+          </div>
+          <div class="field">
+            <label>ECOG at recurrence</label>
+            <select id="ecog_rec" onchange="markDirty()">
+              <option value="">—เลือก—</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="NA">N/A</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Imaging used (ติ๊กที่ใช้ — ไม่ต้องใส่ผล)</div>
+        <div class="check-group"><label><input type="checkbox" name="rec_img" value="CT" onchange="markDirty()"> CT</label><label><input type="checkbox" name="rec_img" value="MRI" onchange="markDirty()"> MRI</label><label><input type="checkbox" name="rec_img" value="Bone scan" onchange="markDirty()"> Bone scan</label><label><input type="checkbox" name="rec_img" value="Ultrasound" onchange="markDirty()"> Ultrasound</label><label><input type="checkbox" name="rec_img" value="Other" onchange="markDirty()"> Other</label></div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Site of metastasis</div>
+        <div class="check-group"><label><input type="checkbox" name="met_site_out" value="lung" onchange="markDirty();recSiteToggle()"> Lung</label><label><input type="checkbox" name="met_site_out" value="bone" onchange="markDirty();recSiteToggle()"> Bone</label><label><input type="checkbox" name="met_site_out" value="brain" onchange="markDirty();recSiteToggle()"> Brain</label><label><input type="checkbox" name="met_site_out" value="liver" onchange="markDirty();recSiteToggle()"> Liver</label><label><input type="checkbox" name="met_site_out" value="adrenal" onchange="markDirty();recSiteToggle()"> Adrenal</label><label><input type="checkbox" name="met_site_out" value="lymph node" onchange="markDirty();recSiteToggle()"> Lymph node</label><label><input type="checkbox" name="met_site_out" value="pleura" onchange="markDirty();recSiteToggle()"> Pleura</label><label><input type="checkbox" name="met_site_out" value="skin" onchange="markDirty();recSiteToggle()"> Skin</label><label><input type="checkbox" name="met_site_out" value="other" onchange="markDirty();recSiteToggle()"> Other</label></div>
+        <div class="field" id="met_site_other_wrap" style="display:none;margin-top:8px;max-width:420px">
+          <label>Other site (ระบุ)</label>
+          <input type="text" id="met_site_other_text" oninput="markDirty()" placeholder="ระบุตำแหน่งอื่น">
+        </div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Re-biopsy</div>
+        <div class="field">
+          <div class="radio-group">
+            <label><input type="radio" name="rec_rebx" value="yes" onchange="markDirty();recRebxToggle()"> Yes</label>
+            <label><input type="radio" name="rec_rebx" value="no" onchange="markDirty();recRebxToggle()"> No</label>
+          </div>
+        </div>
+        <div id="rec_rebx_panel" style="display:none;margin-top:10px">
+          <div class="form-grid g3">
+            <div class="field"><label>Pathology</label><input type="text" id="rec_rebx_patho" oninput="markDirty()" placeholder="เช่น IDC"></div>
+            <div class="field"><label>ER</label><select id="rec_rebx_er" onchange="markDirty()"><option value="">—</option><option>Positive</option><option>Negative</option><option>N/A</option></select></div>
+            <div class="field"><label>PR</label><select id="rec_rebx_pr" onchange="markDirty()"><option value="">—</option><option>Positive</option><option>Negative</option><option>N/A</option></select></div>
+            <div class="field"><label>HER2</label><select id="rec_rebx_her2" onchange="markDirty()"><option value="">—</option><option>0</option><option>1+</option><option>2+ (ISH negative)</option><option>2+ (ISH positive)</option><option>3+</option><option>N/A</option></select></div>
+            <div class="field"><label>Ki-67 (%)</label><input type="text" id="rec_rebx_ki67" inputmode="decimal" oninput="markDirty()" placeholder="%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Other molecular testing</div>
+        <div class="radio-group">
+          <label><input type="radio" name="rec_mol_done" value="done" onchange="markDirty();recMolToggle()"> Done</label>
+          <label><input type="radio" name="rec_mol_done" value="not_done" onchange="markDirty();recMolToggle()"> Not done</label>
+        </div>
+        <div id="rec_mol_panel" style="display:none;margin-top:8px">
+          <div id="rec-mol-rows"></div>
+          <button type="button" class="rec-add" onclick="addRecMol()">+ เพิ่มผลตรวจ</button>
+        </div>
+      </div>
+
+      <div class="subsection" style="border-left:3px solid var(--gold)">
+        <div class="subsection-title">Systemic treatment after recurrence (by line)</div>
+        <div id="rec-lines"></div>
+        <button type="button" class="rec-add" onclick="addRecLine()">+ เพิ่ม line การรักษา</button>
+        <div class="form-grid g2" style="margin-top:14px">
+          <div class="field"><label>Total regimens (กรอกเอง)</label><input type="number" min="0" id="rec_total_regimens" oninput="markDirty()" style="max-width:140px"></div>
+          <div class="field"><label>Remark (กรณีมากกว่า ~5 lines หรือข้อมูลอื่น)</label><textarea id="rec_lines_remark" rows="3" oninput="markDirty()"></textarea></div>
+        </div>
+      </div>
+
+      <details id="rec_legacy" style="display:none;margin-top:12px">
+        <summary style="cursor:pointer;color:var(--text3);font-size:12px">📁 ข้อมูล 2nd-line แบบเดิม (กรอกไว้ก่อนอัปเดต — ข้อมูลยังอยู่ครบ)</summary>
+      <div class="subsection">
+        <div class="subsection-title">Post-Recurrence / Second-Line Treatment</div>
+        <div class="form-grid g3">
+          <div class="field"><label>Post-recurrence treatment</label><div class="radio-group"><label><input type="radio" name="post_rec_tx" value="yes" onchange="markDirty()"> Yes</label><label><input type="radio" name="post_rec_tx" value="no" onchange="markDirty()"> No</label><label><input type="radio" name="post_rec_tx" value="bsc" onchange="markDirty()"> BSC only</label></div></div>
+          <div class="field"><label>Date 2nd-line start</label><input type="text" id="date_2nd_line" class="date-input" placeholder="วว/ดด/พ.ศ." maxlength="10" autocomplete="off" oninput="onThaiDateInput(this, ()=>{ markDirty() })"></div>
+          <div class="field"><label>2nd-line setting</label><select id="second_line_setting" onchange="markDirty()"><option value="">—</option><option>Local recurrence — re-surgery</option><option>Distant — chemotherapy</option><option>Distant — endocrine ± targeted</option><option>Distant — immunotherapy</option><option>Palliative RT</option></select></div>
+        </div>
+        <div class="form-grid g2" style="margin-top:12px">
+          <div class="field">
+            <label>Key 2nd-line agents</label>
+            <div class="check-group">
+              <label><input type="checkbox" name="second_line_agents" value="capecitabine"> Capecitabine</label>
+              <label><input type="checkbox" name="second_line_agents" value="eribulin"> Eribulin</label>
+              <label><input type="checkbox" name="second_line_agents" value="vinorelbine"> Vinorelbine</label>
+              <label><input type="checkbox" name="second_line_agents" value="tdm1"> T-DM1</label>
+              <label><input type="checkbox" name="second_line_agents" value="tds_deruxtecan"> T-DXd (Enhertu)</label>
+              <label><input type="checkbox" name="second_line_agents" value="sacituzumab"> Sacituzumab govitecan</label>
+              <label><input type="checkbox" name="second_line_agents" value="fulvestrant"> Fulvestrant</label>
+              <label><input type="checkbox" name="second_line_agents" value="other"> Other</label>
+            </div>
+          </div>
+          <div class="field"><label>หมายเหตุ Post-recurrence</label><textarea id="post_rec_note" rows="3" oninput="markDirty()"></textarea></div>
+        </div>
+      </div>
+
+      </details>
+
+    </div><!-- end panel6 (Recurrent) -->
+    <!-- ══════════════════════════════════════════ -->
+    <!-- TAB 5: Survival & Outcome -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel7">
       <h2 class="section-title">Survival & Outcome</h2>
       <p class="section-subtitle">Disease-free survival, overall survival and disease status</p>
 
@@ -3822,7 +3953,7 @@
       </div>
 
       <div style="font-size:12px;color:var(--text3);margin:0 0 14px;padding:8px 12px;border:1px dashed var(--border2);border-radius:8px">
-        ข้อมูล recurrence / metastasis และการรักษาหลังกลับเป็นซ้ำ ย้ายไปที่แท็บ <a href="#" onclick="switchTab(7);return false" style="color:var(--teal)">Recurrent</a> แล้ว
+        ข้อมูล recurrence / metastasis และการรักษาหลังกลับเป็นซ้ำ ย้ายไปที่แท็บ <a href="#" onclick="switchTab(6);return false" style="color:var(--teal)">Recurrent</a> แล้ว
         (วันที่ recurrence ยังใช้คำนวณ DFS / BRFS / DRFS ตามเดิม)
       </div>
 
@@ -3963,141 +4094,11 @@
 
     </div><!-- end panel5 -->
 
-    <!-- ══════════════════════════════════════════ -->
-    <!-- TAB 7: Recurrent -->
-    <!-- ══════════════════════════════════════════ -->
-    <div class="tab-panel" id="panel7">
-      <h2 class="section-title">Recurrent / Metastatic Disease</h2>
-      <p class="section-subtitle">กลับเป็นซ้ำ หรือแพร่กระจาย — ผู้ป่วยบางรายเกิดหลังวินิจฉัยหลายเดือน–หลายปี จึงแสดงแท็บนี้ตลอด · ถ้าไม่มีให้เว้นว่างได้</p>
-
-      <div class="subsection" style="border-left:3px solid var(--accent)">
-        <div class="subsection-title">Basic information</div>
-        <div class="form-grid g3">
-          <div class="field">
-            <label>Metastasis at diagnosis (de novo)</label>
-            <div class="radio-group">
-              <label><input type="radio" name="rec_met_at_dx" value="yes" onchange="markDirty()"> Yes</label>
-              <label><input type="radio" name="rec_met_at_dx" value="no" onchange="markDirty()"> No</label>
-            </div>
-          </div>
-          <div class="field">
-            <label>Pattern of recurrence</label>
-            <div class="check-group">
-              <label><input type="checkbox" name="rec_type" value="local" onchange="calcSurvival();recPatternUpdate()"> Local</label>
-              <label><input type="checkbox" name="rec_type" value="regional" onchange="calcSurvival();recPatternUpdate()"> Regional</label>
-              <label><input type="checkbox" name="rec_type" value="distant" onchange="calcSurvival();recPatternUpdate()"> Distant</label>
-            </div>
-            <div style="font-size:11px;color:var(--text3);margin-top:4px">สรุป: <b id="rec_pattern_display" style="color:var(--teal)">—</b> <span>(Local/Regional = Locoregional)</span></div>
-          </div>
-          <div class="field">
-            <label>Date of recurrence / metastasis</label>
-            <input type="text" id="date_recurrence" class="date-input" placeholder="วว/ดด/พ.ศ."
-              maxlength="10" autocomplete="off"
-              oninput="onThaiDateInput(this, ()=>{ calcSurvival() })">
-          </div>
-          <div class="field">
-            <label>ECOG at recurrence</label>
-            <select id="ecog_rec" onchange="markDirty()">
-              <option value="">—เลือก—</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="NA">N/A</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="subsection">
-        <div class="subsection-title">Imaging used (ติ๊กที่ใช้ — ไม่ต้องใส่ผล)</div>
-        <div class="check-group"><label><input type="checkbox" name="rec_img" value="CT" onchange="markDirty()"> CT</label><label><input type="checkbox" name="rec_img" value="MRI" onchange="markDirty()"> MRI</label><label><input type="checkbox" name="rec_img" value="Bone scan" onchange="markDirty()"> Bone scan</label><label><input type="checkbox" name="rec_img" value="Ultrasound" onchange="markDirty()"> Ultrasound</label><label><input type="checkbox" name="rec_img" value="Other" onchange="markDirty()"> Other</label></div>
-      </div>
-
-      <div class="subsection">
-        <div class="subsection-title">Site of metastasis</div>
-        <div class="check-group"><label><input type="checkbox" name="met_site_out" value="lung" onchange="markDirty();recSiteToggle()"> Lung</label><label><input type="checkbox" name="met_site_out" value="bone" onchange="markDirty();recSiteToggle()"> Bone</label><label><input type="checkbox" name="met_site_out" value="brain" onchange="markDirty();recSiteToggle()"> Brain</label><label><input type="checkbox" name="met_site_out" value="liver" onchange="markDirty();recSiteToggle()"> Liver</label><label><input type="checkbox" name="met_site_out" value="adrenal" onchange="markDirty();recSiteToggle()"> Adrenal</label><label><input type="checkbox" name="met_site_out" value="lymph node" onchange="markDirty();recSiteToggle()"> Lymph node</label><label><input type="checkbox" name="met_site_out" value="pleura" onchange="markDirty();recSiteToggle()"> Pleura</label><label><input type="checkbox" name="met_site_out" value="skin" onchange="markDirty();recSiteToggle()"> Skin</label><label><input type="checkbox" name="met_site_out" value="other" onchange="markDirty();recSiteToggle()"> Other</label></div>
-        <div class="field" id="met_site_other_wrap" style="display:none;margin-top:8px;max-width:420px">
-          <label>Other site (ระบุ)</label>
-          <input type="text" id="met_site_other_text" oninput="markDirty()" placeholder="ระบุตำแหน่งอื่น">
-        </div>
-      </div>
-
-      <div class="subsection">
-        <div class="subsection-title">Re-biopsy</div>
-        <div class="field">
-          <div class="radio-group">
-            <label><input type="radio" name="rec_rebx" value="yes" onchange="markDirty();recRebxToggle()"> Yes</label>
-            <label><input type="radio" name="rec_rebx" value="no" onchange="markDirty();recRebxToggle()"> No</label>
-          </div>
-        </div>
-        <div id="rec_rebx_panel" style="display:none;margin-top:10px">
-          <div class="form-grid g3">
-            <div class="field"><label>Pathology</label><input type="text" id="rec_rebx_patho" oninput="markDirty()" placeholder="เช่น IDC"></div>
-            <div class="field"><label>ER</label><select id="rec_rebx_er" onchange="markDirty()"><option value="">—</option><option>Positive</option><option>Negative</option><option>N/A</option></select></div>
-            <div class="field"><label>PR</label><select id="rec_rebx_pr" onchange="markDirty()"><option value="">—</option><option>Positive</option><option>Negative</option><option>N/A</option></select></div>
-            <div class="field"><label>HER2</label><select id="rec_rebx_her2" onchange="markDirty()"><option value="">—</option><option>0</option><option>1+</option><option>2+ (ISH negative)</option><option>2+ (ISH positive)</option><option>3+</option><option>N/A</option></select></div>
-            <div class="field"><label>Ki-67 (%)</label><input type="text" id="rec_rebx_ki67" inputmode="decimal" oninput="markDirty()" placeholder="%"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="subsection">
-        <div class="subsection-title">Other molecular testing</div>
-        <div class="radio-group">
-          <label><input type="radio" name="rec_mol_done" value="done" onchange="markDirty();recMolToggle()"> Done</label>
-          <label><input type="radio" name="rec_mol_done" value="not_done" onchange="markDirty();recMolToggle()"> Not done</label>
-        </div>
-        <div id="rec_mol_panel" style="display:none;margin-top:8px">
-          <div id="rec-mol-rows"></div>
-          <button type="button" class="rec-add" onclick="addRecMol()">+ เพิ่มผลตรวจ</button>
-        </div>
-      </div>
-
-      <div class="subsection" style="border-left:3px solid var(--gold)">
-        <div class="subsection-title">Systemic treatment after recurrence (by line)</div>
-        <div id="rec-lines"></div>
-        <button type="button" class="rec-add" onclick="addRecLine()">+ เพิ่ม line การรักษา</button>
-        <div class="form-grid g2" style="margin-top:14px">
-          <div class="field"><label>Total regimens (กรอกเอง)</label><input type="number" min="0" id="rec_total_regimens" oninput="markDirty()" style="max-width:140px"></div>
-          <div class="field"><label>Remark (กรณีมากกว่า ~5 lines หรือข้อมูลอื่น)</label><textarea id="rec_lines_remark" rows="3" oninput="markDirty()"></textarea></div>
-        </div>
-      </div>
-
-      <details id="rec_legacy" style="display:none;margin-top:12px">
-        <summary style="cursor:pointer;color:var(--text3);font-size:12px">📁 ข้อมูล 2nd-line แบบเดิม (กรอกไว้ก่อนอัปเดต — ข้อมูลยังอยู่ครบ)</summary>
-      <div class="subsection">
-        <div class="subsection-title">Post-Recurrence / Second-Line Treatment</div>
-        <div class="form-grid g3">
-          <div class="field"><label>Post-recurrence treatment</label><div class="radio-group"><label><input type="radio" name="post_rec_tx" value="yes" onchange="markDirty()"> Yes</label><label><input type="radio" name="post_rec_tx" value="no" onchange="markDirty()"> No</label><label><input type="radio" name="post_rec_tx" value="bsc" onchange="markDirty()"> BSC only</label></div></div>
-          <div class="field"><label>Date 2nd-line start</label><input type="text" id="date_2nd_line" class="date-input" placeholder="วว/ดด/พ.ศ." maxlength="10" autocomplete="off" oninput="onThaiDateInput(this, ()=>{ markDirty() })"></div>
-          <div class="field"><label>2nd-line setting</label><select id="second_line_setting" onchange="markDirty()"><option value="">—</option><option>Local recurrence — re-surgery</option><option>Distant — chemotherapy</option><option>Distant — endocrine ± targeted</option><option>Distant — immunotherapy</option><option>Palliative RT</option></select></div>
-        </div>
-        <div class="form-grid g2" style="margin-top:12px">
-          <div class="field">
-            <label>Key 2nd-line agents</label>
-            <div class="check-group">
-              <label><input type="checkbox" name="second_line_agents" value="capecitabine"> Capecitabine</label>
-              <label><input type="checkbox" name="second_line_agents" value="eribulin"> Eribulin</label>
-              <label><input type="checkbox" name="second_line_agents" value="vinorelbine"> Vinorelbine</label>
-              <label><input type="checkbox" name="second_line_agents" value="tdm1"> T-DM1</label>
-              <label><input type="checkbox" name="second_line_agents" value="tds_deruxtecan"> T-DXd (Enhertu)</label>
-              <label><input type="checkbox" name="second_line_agents" value="sacituzumab"> Sacituzumab govitecan</label>
-              <label><input type="checkbox" name="second_line_agents" value="fulvestrant"> Fulvestrant</label>
-              <label><input type="checkbox" name="second_line_agents" value="other"> Other</label>
-            </div>
-          </div>
-          <div class="field"><label>หมายเหตุ Post-recurrence</label><textarea id="post_rec_note" rows="3" oninput="markDirty()"></textarea></div>
-        </div>
-      </div>
-
-      </details>
-
-      <div class="action-bar">
-        <button class="btn-del" onclick="deleteRecord()" style="display:none">🗑 ลบ</button>
-        <button class="btn-cancel" onclick="cancelEdit()">ยกเลิก</button>
-        <button class="btn-save" onclick="saveRecord()">💾 บันทึกข้อมูล</button>
-      </div>
-    </div><!-- end panel7 (Recurrent) -->
 
   </main>
 </div><!-- end app-body -->
 
+<button type="button" class="float-save" id="float_save" onclick="saveRecord()" title="บันทึก (Ctrl+S)">💾 บันทึก <span class="fs-state" id="fs_state"></span></button>
 <div class="toast" id="toast"></div>
 
 <script src="sync.js"></script>
@@ -8338,8 +8339,18 @@ function renderDashboard() {
 }
 
 
-var APP_VERSION='v2.1 · 2026-10-31';
+var APP_VERSION='v2.2 · 2026-11-01';
 (function(){const e=document.getElementById('app_ver'); if(e) e.textContent=APP_VERSION;})();
+// Floating Save button: visible on every tab except Dashboard; turns amber while there are unsaved changes
+function floatSaveRefresh(){
+  const b=document.getElementById('float_save'); if(!b) return;
+  const act=document.querySelector('.tab-panel.active');
+  b.style.display=(act&&act.id!=='panel0')?'flex':'none';
+  const d=!!isDirty; b.classList.toggle('dirty',d);
+  document.getElementById('fs_state').textContent=d?'● ยังไม่ได้บันทึก':'✓ บันทึกแล้ว';
+}
+setInterval(floatSaveRefresh,400);
+document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='s'){ e.preventDefault(); const act=document.querySelector('.tab-panel.active'); if(act&&act.id!=='panel0') saveRecord(); } });
 // ═══════════════ PHASE 3 — COMPLETENESS FLAGS ═══════════════
 // Edit the lists below to change what counts as "complete". Nothing here changes saved data.
 // red = a date that KPI / survival needs.  amber = any other missing item.
