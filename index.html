@@ -647,6 +647,28 @@
     margin-left: 4px;
   }
   .tab-dot.filled { background: var(--teal); }
+  .masked-id:not(:focus){-webkit-text-security:disc;text-security:disc;letter-spacing:2px}
+  .id-msg{font-size:11px;margin-top:4px;min-height:14px}
+  .tab-note{font-size:11px;line-height:1.5;border-radius:var(--radius);padding:8px 12px;margin-top:8px}
+
+.kpi-help{margin:6px 0 10px;font-size:11px;color:var(--text2);background:var(--surface2,rgba(127,127,127,.08));border:1px solid var(--border2,rgba(127,127,127,.25));border-radius:8px;padding:6px 10px;line-height:1.5}
+.kpi-help summary{cursor:pointer;color:var(--text3);font-size:11px}
+.kpi-help-item{margin-top:8px;padding-top:6px;border-top:1px dashed var(--border2,rgba(127,127,127,.25))}
+.kpi-help-item:first-of-type{border-top:none;padding-top:0}
+
+.tx-subbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
+.tx-subbtn{background:none;border:1px solid var(--border2);color:var(--text2);border-radius:999px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:inherit}
+.tx-subbtn.active{background:var(--teal);border-color:var(--teal);color:#06201f;font-weight:700}
+.rec-row{border:1px solid var(--border2);border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--surface2,rgba(127,127,127,.05))}
+.rec-row-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:600;font-size:13px}
+.rec-add{background:none;border:1px dashed var(--teal);color:var(--teal);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;margin-top:4px;font-family:inherit}
+.rec-del{background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px}
+
+.tab-btn{position:relative}
+.flag-badge{position:absolute;top:1px;right:1px;min-width:15px;height:15px;border-radius:8px;font-size:9px;line-height:15px;text-align:center;font-weight:800;color:#0b1114;padding:0 3px;pointer-events:none}
+.flag-note{font-size:12px;margin:-4px 0 14px;padding:6px 12px;border-radius:8px;border:1px solid var(--border2);color:var(--text2)}
+.flag-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.flag-legend{font-size:10px;color:var(--text3);padding:6px 14px 0;line-height:1.5}
 </style>
 </head>
 <body>
@@ -655,7 +677,7 @@
 <header class="app-header">
   <div class="header-logo">
     BCA Registry
-    <span>โรงพยาบาลตากสิน</span>
+    <span>โรงพยาบาลตากสิน <span id="app_ver" style="font-size:10px;color:var(--text3);margin-left:6px"></span></span>
   </div>
   <div class="header-spacer"></div>
   <button class="btn-new" onclick="newRecord()">+ ผู้ป่วยใหม่</button>
@@ -693,6 +715,7 @@
           onblur="this.style.borderColor='var(--border)'">
       </div>
     </div>
+    <div class="flag-legend">🟢 ครบ · 🟡 ยังขาด · 🔴 ขาดวันที่ KPI · ⚪ ยังไม่เริ่ม</div>
     <div class="sidebar-list" id="sidebar-list">
       <div class="empty-state">ยังไม่มีข้อมูล<br>กรอกข้อมูลและบันทึก<br>เพื่อเพิ่มรายการ</div>
     </div>
@@ -730,6 +753,10 @@
       <button class="tab-btn" onclick="switchTab(6)" id="tab6">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Survival & Outcome
+      </button>
+      <button class="tab-btn" onclick="switchTab(7)" id="tab7">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 9 9 9"/></svg>
+        Recurrent
       </button>
     </nav>
 
@@ -790,6 +817,7 @@
         <div id="dash_wait"></div>
       </div>
 
+      <div id="dash_admin" style="font-size:11px;color:var(--text3);text-align:right;margin-top:8px"></div>
       <div style="font-size:11px;color:var(--text3);text-align:right;margin-top:8px" id="dash_updated"></div>
     </div><!-- end panel0 -->
 
@@ -811,6 +839,18 @@
           <div class="field">
             <label>นามสกุล <span class="req">*</span></label>
             <input type="text" id="lastname" placeholder="นามสกุล" oninput="updateSidebar()">
+          </div>
+        </div>
+        <div class="form-grid g3" style="margin-top:12px">
+          <div class="field">
+            <label>Subject ID <span style="font-size:10px;color:var(--text3)">(กำหนดหลังรวมไฟล์ / Merge)</span></label>
+            <input type="text" id="subject_id" class="auto" readonly placeholder="รอกำหนดหลัง Merge" style="opacity:.85;cursor:default">
+          </div>
+          <div class="field">
+            <label>เลขบัตรประชาชน (13 หลัก) <span style="font-size:10px;color:var(--text3)">— แตะเพื่อดู/แก้ไข</span></label>
+            <input type="text" id="national_id" class="masked-id" inputmode="numeric" maxlength="13" autocomplete="off"
+                   placeholder="ตัวเลข 13 หลัก" oninput="onNationalIdInput(this)">
+            <div id="national_id_msg" class="id-msg"></div>
           </div>
         </div>
       </div>
@@ -891,6 +931,23 @@
     <div class="tab-panel" id="panel2">
       <h2 class="section-title">อาการและประวัติโรค</h2>
       <p class="section-subtitle">Presentation, history & physical examination</p>
+
+      <div class="subsection" style="border-left:3px solid var(--teal)">
+        <div class="subsection-title">ECOG Performance Status (ตอนพบแพทย์ครั้งแรก)</div>
+        <div class="form-grid g3">
+          <div class="field">
+            <label>ECOG Performance status</label>
+            <select id="ecog" onchange="markDirty()">
+              <option value="">—เลือก—</option>
+              <option value="0">0 — Fully active</option>
+              <option value="1">1 — Restricted strenuous activity</option>
+              <option value="2">2 — Ambulatory, self-care</option>
+              <option value="3">3 — Limited self-care</option>
+              <option value="4">4 — Completely disabled</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
       <div class="subsection">
         <div class="subsection-title">Presentation</div>
@@ -1225,17 +1282,6 @@
               <option>Palpable</option>
             </select>
           </div>
-          <div class="field">
-            <label>ECOG Performance status</label>
-            <select id="ecog" onchange="markDirty()">
-              <option value="">—เลือก—</option>
-              <option value="0">0 — Fully active</option>
-              <option value="1">1 — Restricted strenuous activity</option>
-              <option value="2">2 — Ambulatory, self-care</option>
-              <option value="3">3 — Limited self-care</option>
-              <option value="4">4 — Completely disabled</option>
-            </select>
-          </div>
         </div>
         <div class="field" style="margin-top:16px">
           <label>หมายเหตุ PE</label>
@@ -1438,7 +1484,137 @@
             </div>
           </div>
         </div>
+                <div style="background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);padding:14px;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px">CT Chest</div>
+          <div class="form-grid g3">
+            <div class="field">
+              <label>Date</label>
+              <input type="text" id="mwu_ct_chest_date" class="date-input" placeholder="วว/ดด/พ.ศ." maxlength="10" autocomplete="off" oninput="onThaiDateInput(this, ()=>{ markDirty() })">
+            </div>
+            <div class="field">
+              <label>Result</label>
+              <select id="mwu_ct_chest_result" onchange="markDirty()">
+                <option value="">—</option>
+                <option>Not done</option>
+                <option>No metastasis</option>
+                <option>Indeterminate / needs follow-up</option>
+                <option>Metastasis suspected</option>
+                <option>Metastasis confirmed</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>หมายเหตุ</label>
+              <input type="text" id="mwu_ct_chest_note" placeholder="ระบุตำแหน่ง, ขนาด..." oninput="markDirty()">
+            </div>
+          </div>
+        </div>
         <div style="background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);padding:14px;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px">CT Abdomen</div>
+          <div class="form-grid g4">
+            <div class="field">
+              <label>Date</label>
+              <input type="text" id="mwu_ct_abd_date" class="date-input" placeholder="วว/ดด/พ.ศ." maxlength="10" autocomplete="off" oninput="onThaiDateInput(this, ()=>{ markDirty() })">
+            </div>
+            <div class="field">
+              <label>Extent</label>
+              <select id="mwu_ct_abd_extent" onchange="markDirty()">
+                <option value="">—</option>
+                <option>Whole abdomen</option>
+                <option>Upper abdomen</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Result</label>
+              <select id="mwu_ct_abd_result" onchange="markDirty()">
+                <option value="">—</option>
+                <option>Not done</option>
+                <option>No metastasis</option>
+                <option>Indeterminate / needs follow-up</option>
+                <option>Metastasis suspected</option>
+                <option>Metastasis confirmed</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>หมายเหตุ</label>
+              <input type="text" id="mwu_ct_abd_note" placeholder="ระบุตำแหน่ง, ขนาด..." oninput="markDirty()">
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);padding:14px;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px">CT Brain</div>
+          <div class="form-grid g3">
+            <div class="field">
+              <label>Date</label>
+              <input type="text" id="mwu_ct_brain_date" class="date-input" placeholder="วว/ดด/พ.ศ." maxlength="10" autocomplete="off" oninput="onThaiDateInput(this, ()=>{ markDirty() })">
+            </div>
+            <div class="field">
+              <label>Result</label>
+              <select id="mwu_ct_brain_result" onchange="markDirty()">
+                <option value="">—</option>
+                <option>Not done</option>
+                <option>No metastasis</option>
+                <option>Indeterminate / needs follow-up</option>
+                <option>Metastasis suspected</option>
+                <option>Metastasis confirmed</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>หมายเหตุ</label>
+              <input type="text" id="mwu_ct_brain_note" placeholder="ระบุตำแหน่ง, ขนาด..." oninput="markDirty()">
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);padding:14px;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px">MRI Upper Abdomen</div>
+          <div class="form-grid g3">
+            <div class="field">
+              <label>Date</label>
+              <input type="text" id="mwu_mri_uabd_date" class="date-input" placeholder="วว/ดด/พ.ศ." maxlength="10" autocomplete="off" oninput="onThaiDateInput(this, ()=>{ markDirty() })">
+            </div>
+            <div class="field">
+              <label>Result</label>
+              <select id="mwu_mri_uabd_result" onchange="markDirty()">
+                <option value="">—</option>
+                <option>Not done</option>
+                <option>No metastasis</option>
+                <option>Indeterminate / needs follow-up</option>
+                <option>Metastasis suspected</option>
+                <option>Metastasis confirmed</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>หมายเหตุ</label>
+              <input type="text" id="mwu_mri_uabd_note" placeholder="ระบุตำแหน่ง, ขนาด..." oninput="markDirty()">
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);padding:14px;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px">MRI Brain</div>
+          <div class="form-grid g3">
+            <div class="field">
+              <label>Date</label>
+              <input type="text" id="mwu_mri_brain_date" class="date-input" placeholder="วว/ดด/พ.ศ." maxlength="10" autocomplete="off" oninput="onThaiDateInput(this, ()=>{ markDirty() })">
+            </div>
+            <div class="field">
+              <label>Result</label>
+              <select id="mwu_mri_brain_result" onchange="markDirty()">
+                <option value="">—</option>
+                <option>Not done</option>
+                <option>No metastasis</option>
+                <option>Indeterminate / needs follow-up</option>
+                <option>Metastasis suspected</option>
+                <option>Metastasis confirmed</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>หมายเหตุ</label>
+              <input type="text" id="mwu_mri_brain_note" placeholder="ระบุตำแหน่ง, ขนาด..." oninput="markDirty()">
+            </div>
+          </div>
+        </div>
+        <div id="mwu_legacy" style="display:none;border:1px dashed var(--border2);border-radius:var(--radius);padding:10px;margin-bottom:10px">
+<div style="font-size:11px;color:var(--text3);margin-bottom:8px">ข้อมูลเดิม (บันทึกก่อนแยก CT/MRI) — ยังเก็บไว้ครบ ไม่ถูกลบ</div>
+<div style="background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);padding:14px;margin-bottom:10px">
           <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px">CT Chest + Abdomen/Pelvis</div>
           <div class="form-grid g3">
             <div class="field">
@@ -1509,6 +1685,7 @@
               <input type="text" id="mwu_liver_note" placeholder="ระบุตำแหน่ง, ขนาด..." oninput="markDirty()">
             </div>
           </div>
+        </div>
         </div>
         <div style="background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius);padding:14px;margin-bottom:10px">
           <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px">Bone Scan</div>
@@ -1741,10 +1918,15 @@
     <!-- ══════════════════════════════════════════ -->
     <div class="tab-panel" id="panel4">
       <h2 class="section-title">Treatment</h2>
-      <p class="section-subtitle">Systemic and locoregional treatment</p>
+      <p class="section-subtitle">Surgery · Systemic (curative intent) · Radiation</p>
+      <div class="tx-subbar" id="tx_subbar">
+        <button type="button" class="tx-subbtn active" data-sub="surg" onclick="showTxSub('surg')">🔪 Surgery</button>
+        <button type="button" class="tx-subbtn" data-sub="sys" onclick="showTxSub('sys')">💊 Systemic (curative intent)</button>
+        <button type="button" class="tx-subbtn" data-sub="rt" onclick="showTxSub('rt')">☢️ Radiation</button>
+      </div>
 
       <!-- Surgery -->
-      <div class="treatment-block">
+      <div class="treatment-block tx-sub" data-sub="surg">
         <div class="treatment-block-title">🔪 Locoregional — Surgery</div>
 
         <div class="subsection">
@@ -1981,6 +2163,14 @@
               <input type="text" id="surg_patho_date" class="date-input" placeholder="วว/ดด/พ.ศ."
                 maxlength="10" autocomplete="off" oninput="onThaiDateInput(this, ()=>{ markDirty() })">
             </div>
+            <div class="field" id="pcr_panel">
+            <label>pCR (ถ้ามี NAC)</label>
+            <div class="radio-group">
+              <label><input type="radio" name="pcr" value="yes" onchange="markDirty()"> pCR</label>
+              <label><input type="radio" name="pcr" value="no" onchange="markDirty()"> No pCR</label>
+              <label><input type="radio" name="pcr" value="na" onchange="markDirty()"> N/A</label>
+            </div>
+          </div>
           </div>
 
           <!-- ── Lesion selector for surgical ── -->
@@ -2509,8 +2699,9 @@
       </div><!-- end surgery treatment-block -->
 
       <!-- Systemic Treatment -->
-      <div class="treatment-block">
-        <div class="treatment-block-title">💊 Systemic Treatment</div>
+      <div class="treatment-block tx-sub" data-sub="sys" style="display:none">
+        <div class="treatment-block-title">💊 Systemic Treatment — curative intent (neoadjuvant / adjuvant)</div>
+        <div style="font-size:11px;color:var(--text3);margin:-4px 0 10px">การรักษา palliative หลังกลับเป็นซ้ำ/แพร่กระจาย ให้บันทึกที่แท็บ Recurrent</div>
         <div class="subsection">
 
           <!-- ══════════════════════════════════════════════════════
@@ -2523,7 +2714,7 @@
             <div style="display:flex;gap:8px;align-items:center">
               <span style="font-size:11px;color:var(--text3)">CMT ≤42 วัน หลังผ่าตัด (KPI 6.2):</span>
               <input type="text" id="kpi_cmt6wk" class="auto" readonly placeholder="—"
-                     style="width:200px;font-size:11px;padding:3px 7px">
+                     style="width:380px;max-width:100%;font-size:11px;padding:3px 7px">
             </div>
           </div>
 
@@ -2786,7 +2977,7 @@
       </div><!-- end systemic treatment-block -->
 
       <!-- Cardiac Monitoring -->
-      <div class="treatment-block">
+      <div class="treatment-block tx-sub" data-sub="sys" style="display:none">
         <div class="treatment-block-title">🫀 Cardiac Monitoring — Echo / MUGA</div>
         <div class="subsection">
           <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Flag อัตโนมัติ: LVEF &lt;50% หรือ ลดลง ≥10% จาก baseline (ESMO criteria)</div>
@@ -2864,7 +3055,7 @@
       </div><!-- end cardiac treatment-block -->
 
       <!-- Radiation Therapy -->
-      <div class="treatment-block">
+      <div class="treatment-block tx-sub" data-sub="rt" style="display:none">
         <div class="treatment-block-title">☢️ Locoregional — Radiation Therapy (RT)</div>
         <div class="subsection">
           <div class="form-grid g3">
@@ -3288,6 +3479,25 @@
         </div>
       </div>
 
+      <!-- ═══ AJCC EDITION ═══ -->
+      <div class="subsection" style="border-left:3px solid var(--gold)">
+        <div class="subsection-title">AJCC Staging Edition</div>
+        <div class="form-grid g3">
+          <div class="field">
+            <label>AJCC edition ที่ใช้ stage</label>
+            <select id="ajcc_edition" onchange="markDirty();ajccEditionNote()">
+              <option value="">—เลือก—</option>
+              <option value="8th">8th edition (คำนวณ stage อัตโนมัติ)</option>
+              <option value="7th">7th edition (กรอก Overall Stage เอง)</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div id="ajcc_note" class="tab-note" style="display:none;background:rgba(212,168,67,.12);border:1px solid var(--gold);color:var(--gold)">
+          ⚠️ การคำนวณ Stage อัตโนมัติใช้กฎ AJCC 8th เท่านั้น — ถ้าเลือก 7th หรือ Other ให้กรอก Overall Stage เอง (ช่อง override ใน Overall Stage Summary)
+        </div>
+      </div>
+
       <!-- ═══ PER-LESION STAGING ═══ -->
       <div class="subsection" style="border-left:3px solid var(--teal)">
         <div class="subsection-title">Per-Lesion Staging <span style="font-size:11px;font-weight:400;color:var(--text3)">(Bilateral / Multifocal)</span></div>
@@ -3593,13 +3803,17 @@
               <option>Unknown</option>
             </select>
           </div>
-          <div class="field" id="pcr_panel">
-            <label>pCR (ถ้ามี NAC)</label>
-            <div class="radio-group">
-              <label><input type="radio" name="pcr" value="yes" onchange="markDirty()"> pCR</label>
-              <label><input type="radio" name="pcr" value="no" onchange="markDirty()"> No pCR</label>
-              <label><input type="radio" name="pcr" value="na" onchange="markDirty()"> N/A</label>
-            </div>
+          <div class="field">
+            <label>ECOG ตอนติดตามล่าสุด (at last follow-up)</label>
+            <select id="ecog_last_fu" onchange="markDirty()">
+              <option value="">—เลือก—</option>
+              <option value="0">0 — Fully active</option>
+              <option value="1">1 — Restricted strenuous activity</option>
+              <option value="2">2 — Ambulatory, self-care</option>
+              <option value="3">3 — Limited self-care</option>
+              <option value="4">4 — Completely disabled</option>
+              <option value="NA">N/A</option>
+            </select>
           </div>
         </div>
 
@@ -3607,35 +3821,9 @@
         <div id="scenario_badge" style="display:none;padding:10px 14px;border-radius:var(--radius);margin-bottom:14px;font-size:12px;font-weight:600"></div>
       </div>
 
-      <!-- ═══ RECURRENCE (shown if alive_rec or dead) ═══ -->
-      <div class="subsection" id="recurrence_panel" style="display:none">
-        <div class="subsection-title">Disease Recurrence</div>
-        <div class="form-grid g3">
-          <div class="field">
-            <label>Date of first recurrence / metastasis</label>
-            <input type="text" id="date_recurrence" class="date-input" placeholder="วว/ดด/พ.ศ."
-              maxlength="10" autocomplete="off"
-              oninput="onThaiDateInput(this, ()=>{ calcSurvival() })">
-          </div>
-          <div class="field">
-            <label>Type of recurrence</label>
-            <div class="check-group">
-              <label><input type="checkbox" name="rec_type" value="local" onchange="calcSurvival()"> Local</label>
-              <label><input type="checkbox" name="rec_type" value="regional" onchange="calcSurvival()"> Regional</label>
-              <label><input type="checkbox" name="rec_type" value="distant" onchange="calcSurvival()"> Distant</label>
-            </div>
-          </div>
-          <div class="field">
-            <label>Metastasis sites</label>
-            <div class="check-group">
-              <label><input type="checkbox" name="met_site_out" value="bone"> Bone</label>
-              <label><input type="checkbox" name="met_site_out" value="lung"> Lung</label>
-              <label><input type="checkbox" name="met_site_out" value="liver"> Liver</label>
-              <label><input type="checkbox" name="met_site_out" value="brain"> Brain</label>
-              <label><input type="checkbox" name="met_site_out" value="other"> Other</label>
-            </div>
-          </div>
-        </div>
+      <div style="font-size:12px;color:var(--text3);margin:0 0 14px;padding:8px 12px;border:1px dashed var(--border2);border-radius:8px">
+        ข้อมูล recurrence / metastasis และการรักษาหลังกลับเป็นซ้ำ ย้ายไปที่แท็บ <a href="#" onclick="switchTab(7);return false" style="color:var(--teal)">Recurrent</a> แล้ว
+        (วันที่ recurrence ยังใช้คำนวณ DFS / BRFS / DRFS ตามเดิม)
       </div>
 
       <!-- ═══ SURVIVAL CALCULATION ═══ -->
@@ -3756,7 +3944,123 @@
         </div>
       </div>
 
-      <!-- Post-recurrence -->
+      <div class="subsection">
+        <div class="subsection-title">Remarks</div>
+        <div class="field"><label>หมายเหตุทั้งหมด</label><textarea id="remarks" rows="4" placeholder="บันทึกข้อมูลที่ไม่สามารถลงในช่องอื่น..." oninput="markDirty()"></textarea></div>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn-del" onclick="deleteRecord()" id="btn-del" style="display:none">🗑 ลบ</button>
+        <button class="btn-cancel" onclick="cancelEdit()">ยกเลิก</button>
+        <button class="btn-save" onclick="saveRecord()">💾 บันทึกข้อมูล</button>
+      </div>
+      <div class="audit-panel" id="audit-panel" style="display:none">
+        <div>สร้างเมื่อ: <span id="audit-created">—</span></div>
+        <div>แก้ไขล่าสุด: <span id="audit-modified">—</span></div>
+        <div>จำนวนครั้งที่แก้ไข: <span id="audit-version">—</span></div>
+        <div>ID: <span id="audit-id" style="font-family:'DM Mono',monospace;font-size:10px">—</span></div>
+      </div>
+
+    </div><!-- end panel5 -->
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- TAB 7: Recurrent -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel7">
+      <h2 class="section-title">Recurrent / Metastatic Disease</h2>
+      <p class="section-subtitle">กลับเป็นซ้ำ หรือแพร่กระจาย — ผู้ป่วยบางรายเกิดหลังวินิจฉัยหลายเดือน–หลายปี จึงแสดงแท็บนี้ตลอด · ถ้าไม่มีให้เว้นว่างได้</p>
+
+      <div class="subsection" style="border-left:3px solid var(--accent)">
+        <div class="subsection-title">Basic information</div>
+        <div class="form-grid g3">
+          <div class="field">
+            <label>Metastasis at diagnosis (de novo)</label>
+            <div class="radio-group">
+              <label><input type="radio" name="rec_met_at_dx" value="yes" onchange="markDirty()"> Yes</label>
+              <label><input type="radio" name="rec_met_at_dx" value="no" onchange="markDirty()"> No</label>
+            </div>
+          </div>
+          <div class="field">
+            <label>Pattern of recurrence</label>
+            <div class="check-group">
+              <label><input type="checkbox" name="rec_type" value="local" onchange="calcSurvival();recPatternUpdate()"> Local</label>
+              <label><input type="checkbox" name="rec_type" value="regional" onchange="calcSurvival();recPatternUpdate()"> Regional</label>
+              <label><input type="checkbox" name="rec_type" value="distant" onchange="calcSurvival();recPatternUpdate()"> Distant</label>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">สรุป: <b id="rec_pattern_display" style="color:var(--teal)">—</b> <span>(Local/Regional = Locoregional)</span></div>
+          </div>
+          <div class="field">
+            <label>Date of recurrence / metastasis</label>
+            <input type="text" id="date_recurrence" class="date-input" placeholder="วว/ดด/พ.ศ."
+              maxlength="10" autocomplete="off"
+              oninput="onThaiDateInput(this, ()=>{ calcSurvival() })">
+          </div>
+          <div class="field">
+            <label>ECOG at recurrence</label>
+            <select id="ecog_rec" onchange="markDirty()">
+              <option value="">—เลือก—</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="NA">N/A</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Imaging used (ติ๊กที่ใช้ — ไม่ต้องใส่ผล)</div>
+        <div class="check-group"><label><input type="checkbox" name="rec_img" value="CT" onchange="markDirty()"> CT</label><label><input type="checkbox" name="rec_img" value="MRI" onchange="markDirty()"> MRI</label><label><input type="checkbox" name="rec_img" value="Bone scan" onchange="markDirty()"> Bone scan</label><label><input type="checkbox" name="rec_img" value="Ultrasound" onchange="markDirty()"> Ultrasound</label><label><input type="checkbox" name="rec_img" value="Other" onchange="markDirty()"> Other</label></div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Site of metastasis</div>
+        <div class="check-group"><label><input type="checkbox" name="met_site_out" value="lung" onchange="markDirty();recSiteToggle()"> Lung</label><label><input type="checkbox" name="met_site_out" value="bone" onchange="markDirty();recSiteToggle()"> Bone</label><label><input type="checkbox" name="met_site_out" value="brain" onchange="markDirty();recSiteToggle()"> Brain</label><label><input type="checkbox" name="met_site_out" value="liver" onchange="markDirty();recSiteToggle()"> Liver</label><label><input type="checkbox" name="met_site_out" value="adrenal" onchange="markDirty();recSiteToggle()"> Adrenal</label><label><input type="checkbox" name="met_site_out" value="lymph node" onchange="markDirty();recSiteToggle()"> Lymph node</label><label><input type="checkbox" name="met_site_out" value="pleura" onchange="markDirty();recSiteToggle()"> Pleura</label><label><input type="checkbox" name="met_site_out" value="skin" onchange="markDirty();recSiteToggle()"> Skin</label><label><input type="checkbox" name="met_site_out" value="other" onchange="markDirty();recSiteToggle()"> Other</label></div>
+        <div class="field" id="met_site_other_wrap" style="display:none;margin-top:8px;max-width:420px">
+          <label>Other site (ระบุ)</label>
+          <input type="text" id="met_site_other_text" oninput="markDirty()" placeholder="ระบุตำแหน่งอื่น">
+        </div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Re-biopsy</div>
+        <div class="field">
+          <div class="radio-group">
+            <label><input type="radio" name="rec_rebx" value="yes" onchange="markDirty();recRebxToggle()"> Yes</label>
+            <label><input type="radio" name="rec_rebx" value="no" onchange="markDirty();recRebxToggle()"> No</label>
+          </div>
+        </div>
+        <div id="rec_rebx_panel" style="display:none;margin-top:10px">
+          <div class="form-grid g3">
+            <div class="field"><label>Pathology</label><input type="text" id="rec_rebx_patho" oninput="markDirty()" placeholder="เช่น IDC"></div>
+            <div class="field"><label>ER</label><select id="rec_rebx_er" onchange="markDirty()"><option value="">—</option><option>Positive</option><option>Negative</option><option>N/A</option></select></div>
+            <div class="field"><label>PR</label><select id="rec_rebx_pr" onchange="markDirty()"><option value="">—</option><option>Positive</option><option>Negative</option><option>N/A</option></select></div>
+            <div class="field"><label>HER2</label><select id="rec_rebx_her2" onchange="markDirty()"><option value="">—</option><option>0</option><option>1+</option><option>2+ (ISH negative)</option><option>2+ (ISH positive)</option><option>3+</option><option>N/A</option></select></div>
+            <div class="field"><label>Ki-67 (%)</label><input type="text" id="rec_rebx_ki67" inputmode="decimal" oninput="markDirty()" placeholder="%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Other molecular testing</div>
+        <div class="radio-group">
+          <label><input type="radio" name="rec_mol_done" value="done" onchange="markDirty();recMolToggle()"> Done</label>
+          <label><input type="radio" name="rec_mol_done" value="not_done" onchange="markDirty();recMolToggle()"> Not done</label>
+        </div>
+        <div id="rec_mol_panel" style="display:none;margin-top:8px">
+          <div id="rec-mol-rows"></div>
+          <button type="button" class="rec-add" onclick="addRecMol()">+ เพิ่มผลตรวจ</button>
+        </div>
+      </div>
+
+      <div class="subsection" style="border-left:3px solid var(--gold)">
+        <div class="subsection-title">Systemic treatment after recurrence (by line)</div>
+        <div id="rec-lines"></div>
+        <button type="button" class="rec-add" onclick="addRecLine()">+ เพิ่ม line การรักษา</button>
+        <div class="form-grid g2" style="margin-top:14px">
+          <div class="field"><label>Total regimens (กรอกเอง)</label><input type="number" min="0" id="rec_total_regimens" oninput="markDirty()" style="max-width:140px"></div>
+          <div class="field"><label>Remark (กรณีมากกว่า ~5 lines หรือข้อมูลอื่น)</label><textarea id="rec_lines_remark" rows="3" oninput="markDirty()"></textarea></div>
+        </div>
+      </div>
+
+      <details id="rec_legacy" style="display:none;margin-top:12px">
+        <summary style="cursor:pointer;color:var(--text3);font-size:12px">📁 ข้อมูล 2nd-line แบบเดิม (กรอกไว้ก่อนอัปเดต — ข้อมูลยังอยู่ครบ)</summary>
       <div class="subsection">
         <div class="subsection-title">Post-Recurrence / Second-Line Treatment</div>
         <div class="form-grid g3">
@@ -3782,24 +4086,14 @@
         </div>
       </div>
 
-      <div class="subsection">
-        <div class="subsection-title">Remarks</div>
-        <div class="field"><label>หมายเหตุทั้งหมด</label><textarea id="remarks" rows="4" placeholder="บันทึกข้อมูลที่ไม่สามารถลงในช่องอื่น..." oninput="markDirty()"></textarea></div>
-      </div>
+      </details>
 
       <div class="action-bar">
-        <button class="btn-del" onclick="deleteRecord()" id="btn-del" style="display:none">🗑 ลบ</button>
+        <button class="btn-del" onclick="deleteRecord()" style="display:none">🗑 ลบ</button>
         <button class="btn-cancel" onclick="cancelEdit()">ยกเลิก</button>
         <button class="btn-save" onclick="saveRecord()">💾 บันทึกข้อมูล</button>
       </div>
-      <div class="audit-panel" id="audit-panel" style="display:none">
-        <div>สร้างเมื่อ: <span id="audit-created">—</span></div>
-        <div>แก้ไขล่าสุด: <span id="audit-modified">—</span></div>
-        <div>จำนวนครั้งที่แก้ไข: <span id="audit-version">—</span></div>
-        <div>ID: <span id="audit-id" style="font-family:'DM Mono',monospace;font-size:10px">—</span></div>
-      </div>
-
-    </div><!-- end panel5 -->
+    </div><!-- end panel7 (Recurrent) -->
 
   </main>
 </div><!-- end app-body -->
@@ -4651,11 +4945,12 @@ function monthsBetween(iso1, iso2) {
 function calcSurvival() {
   const status    = (document.getElementById('status')||{}).value || '';
   const recur     = document.querySelector('input[name="recurrence"]:checked');
-  const hasRecur  = recur && recur.value === 'yes';
   const isDead    = status === 'dead';
 
   const lastFU    = vDate('date_last_fu');     // ISO or ''
   const dateRec   = vDate('date_recurrence');  // ISO or ''
+  // FIX: the old yes/no radio no longer exists, so use status or a recorded recurrence date
+  const hasRecur  = (recur && recur.value === 'yes') || status === 'alive_rec' || !!dateRec;
   const dateDeath = isDead ? lastFU : '';      // death date = date_last_fu when dead
 
   // Rec type checkboxes
@@ -5418,7 +5713,7 @@ function addCmtSession(data) {
       </div>
       <div class="field">
         <label>Status</label>
-        <select id="${sid}_status" onchange="markDirty()">
+        <select id="${sid}_status" onchange="markDirty();cmtStopToggle('${sid}')">
           <option value="">—</option>
           <option value="Completed">Completed ✅</option>
           <option value="Ongoing">Ongoing 🔄</option>
@@ -5426,6 +5721,21 @@ function addCmtSession(data) {
           <option value="Stopped (progression)">Stopped — progression ⚠️</option>
           <option value="Denied by patient">Denied by patient</option>
         </select>
+      </div>
+      <div class="field" id="${sid}_stop_wrap" style="display:none">
+        <label>เหตุผลที่หยุด (Stop reason)</label>
+        <select id="${sid}_stop" onchange="markDirty();cmtStopToggle('${sid}')">
+          <option value="">—</option>
+          <option value="Complete treatment">Complete treatment</option>
+          <option value="Recurrence">Recurrence</option>
+          <option value="Intolerance">Intolerance</option>
+          <option value="Lost to follow-up">Lost to follow-up</option>
+          <option value="Other">Other (ระบุ)</option>
+        </select>
+      </div>
+      <div class="field" id="${sid}_stop_other_wrap" style="display:none">
+        <label>ระบุเหตุผลอื่น</label>
+        <input type="text" id="${sid}_stop_other" placeholder="free text" oninput="markDirty()">
       </div>
       <div class="field" style="grid-column:span 2">
         <label>Memo</label>
@@ -5444,11 +5754,24 @@ function addCmtSession(data) {
     setV(`${sid}_cycles`, data.cycles);
     setV(`${sid}_status`, data.status);
     setV(`${sid}_memo`,   data.memo);
+    setV(`${sid}_stop`,   data.stop_reason);
+    setV(`${sid}_stop_other`, data.stop_other);
     if (data.date_start) svDate(`${sid}_date_start`, data.date_start);
     if (data.date_end)   svDate(`${sid}_date_end`,   data.date_end);
   }
+  cmtStopToggle(sid);
 
   markDirty();
+}
+
+// show "stop reason" only when the session is no longer ongoing / not blank
+function cmtStopToggle(sid) {
+  const g = id => document.getElementById(id);
+  const st = g(`${sid}_status`) ? g(`${sid}_status`).value : '';
+  const showStop = st !== '' && st !== 'Ongoing';
+  const w = g(`${sid}_stop_wrap`); if (w) w.style.display = showStop ? '' : 'none';
+  const rs = g(`${sid}_stop`) ? g(`${sid}_stop`).value : '';
+  const o = g(`${sid}_stop_other_wrap`); if (o) o.style.display = (showStop && rs === 'Other') ? '' : 'none';
 }
 
 function removeCmtSession(n) {
@@ -5473,6 +5796,8 @@ function collectCmtSessions() {
       date_start: getIso(`${sid}_date_start`),
       date_end:   getIso(`${sid}_date_end`),
       status:     getV(`${sid}_status`),
+      stop_reason: getV(`${sid}_stop`),
+      stop_other:  getV(`${sid}_stop_other`),
       memo:       getV(`${sid}_memo`),
     });
   });
@@ -6688,6 +7013,14 @@ function collectData() {
   return {
     // Demographics
     hn:v('hn'),firstname:v('firstname'),lastname:v('lastname'),
+    subject_id:v('subject_id'),national_id:v('national_id'),
+    ajcc_edition:v('ajcc_edition'),ecog_last_fu:v('ecog_last_fu'),
+    rec_met_at_dx:radVal('rec_met_at_dx'),rec_pattern:recPatternText(),ecog_rec:v('ecog_rec'),
+    rec_img:checkVals('rec_img').join(', '),met_site_other_text:v('met_site_other_text'),
+    rec_rebx:radVal('rec_rebx'),rec_rebx_patho:v('rec_rebx_patho'),rec_rebx_er:v('rec_rebx_er'),rec_rebx_pr:v('rec_rebx_pr'),
+    rec_rebx_her2:v('rec_rebx_her2'),rec_rebx_ki67:v('rec_rebx_ki67'),
+    rec_mol_done:radVal('rec_mol_done'),rec_mol_json:JSON.stringify(collectRecMol()),
+    rec_lines_json:JSON.stringify(collectRecLines()),rec_total_regimens:v('rec_total_regimens'),rec_lines_remark:v('rec_lines_remark'),
     birthdate:vd('birthdate'),age:v('age'),age_at_dx:v('age_at_dx'),sex:v('sex'),
     menopause:v('menopause'),weight:v('weight'),height:v('height'),bmi:v('bmi'),
     fiscal_year:v('fiscal_year'),insurance:v('insurance'),
@@ -6748,6 +7081,11 @@ function collectData() {
     axilla_us:checkVals('img_axilla').join(', '),
     mmg_result:v('mmg_result'),us_result:v('us_result'),img_tumor_size:v('img_tumor_size'),
     mri_result:v('mri_result'),mri_tumor_size:v('mri_tumor_size'),mri_note:v('mri_note'),
+    mwu_ct_chest_date:vd('mwu_ct_chest_date'),mwu_ct_chest_result:v('mwu_ct_chest_result'),mwu_ct_chest_note:v('mwu_ct_chest_note'),
+    mwu_ct_abd_date:vd('mwu_ct_abd_date'),mwu_ct_abd_result:v('mwu_ct_abd_result'),mwu_ct_abd_note:v('mwu_ct_abd_note'),mwu_ct_abd_extent:v('mwu_ct_abd_extent'),
+    mwu_ct_brain_date:vd('mwu_ct_brain_date'),mwu_ct_brain_result:v('mwu_ct_brain_result'),mwu_ct_brain_note:v('mwu_ct_brain_note'),
+    mwu_mri_uabd_date:vd('mwu_mri_uabd_date'),mwu_mri_uabd_result:v('mwu_mri_uabd_result'),mwu_mri_uabd_note:v('mwu_mri_uabd_note'),
+    mwu_mri_brain_date:vd('mwu_mri_brain_date'),mwu_mri_brain_result:v('mwu_mri_brain_result'),mwu_mri_brain_note:v('mwu_mri_brain_note'),
     mwu_cxr_date:vd('mwu_cxr_date'),mwu_cxr_result:v('mwu_cxr_result'),mwu_cxr_note:v('mwu_cxr_note'),
     mwu_us_abd_date:vd('mwu_us_abd_date'),mwu_us_abd_result:v('mwu_us_abd_result'),mwu_us_abd_note:v('mwu_us_abd_note'),
     mwu_ct_cap_date:vd('mwu_ct_cap_date'),mwu_ct_cap_result:v('mwu_ct_cap_result'),mwu_ct_cap_note:v('mwu_ct_cap_note'),
@@ -6959,6 +7297,7 @@ function loadData(d) {
   const DATE_IDS = [
     'birthdate','date_first_visit','date_imaging',
     'mwu_cxr_date','mwu_us_abd_date','mwu_ct_cap_date',
+    'mwu_ct_chest_date','mwu_ct_abd_date','mwu_ct_brain_date','mwu_mri_uabd_date','mwu_mri_brain_date',
     'mwu_brain_date','mwu_liver_date','mwu_bone_date','mwu_pet_date',
     'bx_date','bx_patho_date','ln_bx_date','ln_patho_date',
     'date_or','surg_patho_date','r1_date',
@@ -6986,6 +7325,8 @@ function loadData(d) {
   else restoreCmtSessions([]);
   if (d.her2_sessions_json) { try { restoreHer2Sessions(JSON.parse(d.her2_sessions_json)); } catch(e) { restoreHer2Sessions([]); } }
   else restoreHer2Sessions([]);
+  try { restoreRecMol(d.rec_mol_json ? JSON.parse(d.rec_mol_json) : []); } catch(e) { restoreRecMol([]); }
+  try { restoreRecLines(d.rec_lines_json ? JSON.parse(d.rec_lines_json) : []); } catch(e) { restoreRecLines([]); }
   // Tumor marker follow-up rows
   if (d.tm_json) { try { buildTumorMarkers(JSON.parse(d.tm_json)); } catch(e) { buildTumorMarkers(null); } }
   else buildTumorMarkers(null);
@@ -7009,7 +7350,7 @@ function loadData(d) {
    'op_side','or_hospital','slnb_done','slnb_side','slnb_inject','alnd_done','alnd_side',
    'endocrine','radiation','recurrence','pcr',
    'dfs_event','os_event','brfs_event','drfs_event',
-   'cdk46','parpi','immuno','ofs','dose_reduction','post_rec_tx',
+   'cdk46','parpi','immuno','ofs','dose_reduction','post_rec_tx','rec_met_at_dx','rec_rebx','rec_mol_done',
    'ene','met_overall','dcis_grade','comedo','final_ihc_source',
   ].forEach(name => setRad(name, d[name]));
   // Restore surgical complications
@@ -7038,7 +7379,7 @@ function loadData(d) {
    ['img_modality','img_modality'],['lesion_finding','lesion_finding'],
    ['img_loc_r','img_loc_right'],['img_loc_l','img_loc_left'],
    ['img_axilla','axilla_us'],['complication','complications'],
-   ['rec_type','rec_type'],['met_site_out','met_site_out'],
+   ['rec_type','rec_type'],['met_site_out','met_site_out'],['rec_img','rec_img'],
    ['slnb_tracer','slnb_tracer'],['alnd_indication','alnd_indication'],
    ['margin_loc','margin_loc'],['second_line_agents','second_line_agents'],
    ['cardiac_sx','cardiac_sx'],['met_sites_wu','met_sites_wu'],
@@ -7068,6 +7409,7 @@ function loadData(d) {
 
   // Step 7: recalculate
   calcAllStages(); updateMolSubtype(); updateBxSubtype(); calcSurvival(); calcCardiac(); calcLNSummation(); calcRCB(); linkFields(); syncDxTab();
+  validateNationalId(); ajccEditionNote(); updateMwuLegacy(); recRefreshUI(); flagSoon();
 
   // Step 8: clear search box
   const sb = document.getElementById('sidebar-search');
@@ -7092,6 +7434,7 @@ function clearForm() {
   restoreSpPanels([]);
   restoreStgPanels([]);
   restoreCmtSessions([]);
+  restoreRecMol([]); restoreRecLines([]);
   restoreDish([]);
   restoreHer2Sessions([]);
   buildTumorMarkers(null);
@@ -7109,6 +7452,8 @@ function clearForm() {
    'r1_procedure_panel','yp_pcr_note','cardiac_ctcae_banner','audit-panel'
   ].forEach(id => { const e=document.getElementById(id); if(e) e.style.display='none'; });
   ['flag_post','flag_6m','flag_12m','flag_18m','flag_24m'].forEach(id => { const e=document.getElementById(id); if(e) e.style.display='none'; });
+  const _sid0=document.getElementById('subject_id'); if(_sid0) _sid0.value='';
+  validateNationalId(); ajccEditionNote(); updateMwuLegacy(); recRefreshUI(); flagSoon();
 }
 
 // ─────────────────────────────────────────────────────
@@ -7139,7 +7484,7 @@ function renderSidebar(filterText) {
   count.textContent = records.length;
   const query = (filterText||'').trim().toLowerCase();
   const filtered = query
-    ? records.filter(r => (r.hn||'').toLowerCase().includes(query) ||
+    ? records.filter(r => (r.hn||'').toLowerCase().includes(query) || (r.subject_id||'').toLowerCase().includes(query) ||
         ((r.firstname||'')+' '+(r.lastname||'')).toLowerCase().includes(query))
     : records;
   if (records.length === 0) { list.innerHTML = '<div class="empty-state">ยังไม่มีข้อมูล<br>กรอกข้อมูลและบันทึก</div>'; return; }
@@ -7175,7 +7520,7 @@ function renderSidebar(filterText) {
     const age  = r.age ? `${r.age}ปี` : '';
     const meta = [stage, age, subtype ? '· '+subtype : ''].filter(Boolean).join(' ');
     return `<div class="record-item ${r.id===currentId?'active':''}" onclick="loadRecord(${r.id})">
-      <div class="ri-hn">${hn || 'HN ไม่ระบุ'}</div>
+      <div class="ri-hn">${flagDot(r)}${hn || 'HN ไม่ระบุ'}${r.subject_id ? ` <span style="color:var(--text3);font-size:10px">· ${r.subject_id}</span>` : ''}</div>
       <div class="ri-name">${name || '(ไม่ระบุชื่อ)'}</div>
       <div class="ri-meta">${meta}</div>
     </div>`;
@@ -7187,7 +7532,8 @@ function renderSidebar(filterText) {
 // ─────────────────────────────────────────────────────
 function newRecord() {
   currentId = null; clearForm();
-  document.getElementById('btn-del').style.display = 'none';
+  const _ae = document.getElementById('ajcc_edition'); if (_ae) { _ae.value = '8th'; ajccEditionNote(); }
+  document.querySelectorAll('.btn-del').forEach(b=>b.style.display='none');
   document.getElementById('audit-panel').style.display = 'none';
   switchTab(1); isDirty = false;
   const sb = document.getElementById('sidebar-search'); if(sb) sb.value = '';
@@ -7208,6 +7554,11 @@ function saveRecord() {
     const dup = records.find(r => r.id!==currentId && r.hn && r.hn.trim().toLowerCase()===data.hn.trim().toLowerCase());
     if (dup && !confirm(`⚠️ HN "${data.hn}" ซ้ำกับ "${dup.firstname||''} ${dup.lastname||''}"\n\nต้องการบันทึกต่อหรือไม่?`)) return;
   }
+  if (data.national_id) {
+    const dupN = records.find(r => r.id!==currentId && r.national_id && String(r.national_id)===String(data.national_id));
+    if (dupN && !confirm(`⚠️ เลขบัตรประชาชนนี้ซ้ำกับ HN "${dupN.hn||''}"\n\nต้องการบันทึกต่อหรือไม่?`)) return;
+  }
+  data._app_ver = APP_VERSION;
   const now = new Date().toISOString();
   if (currentId !== null) {
     const idx = records.findIndex(r => r.id === currentId);
@@ -7230,7 +7581,7 @@ function saveRecord() {
     showToast('✅ บันทึกในเครื่องแล้ว (ยังไม่เชื่อมต่อ Sheets)');
     setBadge('warn', '💾 เฉพาะในเครื่อง — ' + records.length + ' ผู้ป่วย');
   }
-  document.getElementById('btn-del').style.display = '';
+  document.querySelectorAll('.btn-del').forEach(b=>b.style.display='');
   renderSidebar(); updateAuditPanel();
 }
 
@@ -7242,7 +7593,7 @@ function loadRecord(id) {
   clearForm();
   _loadingData = true; loadData(rec); _loadingData = false;
   isDirty = false;
-  document.getElementById('btn-del').style.display = '';
+  document.querySelectorAll('.btn-del').forEach(b=>b.style.display='');
   renderSidebar(); updateAuditPanel(); switchTab(1);
 }
 
@@ -7254,7 +7605,7 @@ function deleteRecord() {
   const deletedId = currentId;
   records = records.filter(r => r.id !== deletedId);
   currentId = null; clearForm(); isDirty = false;
-  document.getElementById('btn-del').style.display = 'none';
+  document.querySelectorAll('.btn-del').forEach(b=>b.style.display='none');
   document.getElementById('audit-panel').style.display = 'none';
   saveLocalCache();
   if (APPS_SCRIPT_URL) deleteFromSheets(deletedId).then(ok => {
@@ -7308,13 +7659,13 @@ function exportExcel() {
   if (!records.length) { showToast('⚠️ ไม่มีข้อมูล','var(--accent)'); return; }
   if (typeof XLSX === 'undefined') { showToast('❌ XLSX library ไม่โหลด','var(--accent)'); return; }
   const headers = {
-    hn:'HN',firstname:'ชื่อ',lastname:'นามสกุล',birthdate:'วันเกิด',age:'อายุปัจจุบัน',age_at_dx:'อายุที่ diagnosis',sex:'เพศ',
+    hn:'HN',subject_id:'Subject ID',national_id:'เลขบัตรประชาชน',firstname:'ชื่อ',lastname:'นามสกุล',birthdate:'วันเกิด',age:'อายุปัจจุบัน',age_at_dx:'อายุที่ diagnosis',sex:'เพศ',
     menopause:'ประจำเดือน',weight:'น้ำหนัก(kg)',height:'ส่วนสูง(cm)',bmi:'BMI',
     fiscal_year:'ปีงบ',insurance:'สิทธิ์',
     date_first_visit:'Date 1st visit',symptom_duration:'ระยะอาการ',symptoms:'อาการ',side:'ข้าง',
     smoking:'Smoking',smoking_pack_years:'Pack-years',alcohol:'Alcohol',alcohol_frequency:'Alcohol freq',
     family_hx:'Family hx',brca:'BRCA',
-    pe_tumor_size:'PE size(cm)',pe_tumor_char:'ลักษณะก้อน',pe_skin:'Skin',pe_axilla:'Axilla PE',ecog:'ECOG',
+    pe_tumor_size:'PE size(cm)',pe_tumor_char:'ลักษณะก้อน',pe_skin:'Skin',pe_axilla:'Axilla PE',ecog:'ECOG (1st visit)',ecog_last_fu:'ECOG (last f/u)',rec_met_at_dx:'Met at diagnosis',rec_pattern:'Recurrence pattern',ecog_rec:'ECOG (recurrence)',rec_img:'Rec imaging used',met_site_other_text:'Met site other',rec_rebx:'Re-biopsy',rec_rebx_patho:'Re-bx pathology',rec_rebx_er:'Re-bx ER',rec_rebx_pr:'Re-bx PR',rec_rebx_her2:'Re-bx HER2',rec_rebx_ki67:'Re-bx Ki67',rec_mol_done:'Other molecular testing',rec_total_regimens:'Total regimens (rec)',rec_lines_remark:'Rec lines remark',ajcc_edition:'AJCC edition',
     bx_date:'Date biopsy',bx_subtype:'Biopsy subtype',bx_grade:'Biopsy grade',
     bx_er:'ER(bx)',bx_pr:'PR(bx)',bx_her2:'HER2(bx)',bx_ki67:'KI67(bx)',bx_mol_subtype:'Mol subtype(bx)',
     bx_panels_json:'Biopsy per-lesion (JSON)',sp_panels_json:'Surgical patho per-lesion (JSON)',stg_panels_json:'Staging per-lesion (JSON)',
@@ -7325,6 +7676,7 @@ function exportExcel() {
     mri_result:'MRI',
     mwu_cxr_result:'CXR',mwu_us_abd_result:'US abd',mwu_ct_cap_result:'CT CAP',
     mwu_brain_result:'CT/MRI brain',mwu_liver_result:'CT/MRI liver',
+    mwu_ct_chest_result:'CT Chest',mwu_ct_abd_result:'CT Abdomen',mwu_ct_abd_extent:'CT Abdomen extent',mwu_ct_brain_result:'CT Brain',mwu_mri_uabd_result:'MRI Upper Abdomen',mwu_mri_brain_result:'MRI Brain',
     mwu_bone_result:'Bone scan',mwu_pet_result:'PET-CT',met_overall:'Met status',
     lab_hb:'Hb',lab_wbc:'WBC',lab_plt:'Plt',lab_cr:'Cr',lab_ast:'AST',lab_alt:'ALT',lab_ca153:'CA15-3 (latest)',lab_cea:'CEA (latest)',lab_ca125:'CA125 (latest)',
     date_or:'Date OR',op_side:'Side',op_breast_r:'Op(R)',op_breast_l:'Op(L)',
@@ -7362,9 +7714,10 @@ function exportExcel() {
     post_rec_tx:'Post-rec Tx',second_line_agents:'2nd line agents',
     remarks:'Remarks',
   };
+  Object.assign(headers, recExportHeaders());
   const keys = Object.keys(headers);
   const heads = keys.map(k => headers[k]);
-  const rows  = records.map(r => keys.map(k => r[k]||''));
+  const rows  = records.map(r0 => { const r = Object.assign({}, r0, recFlat(r0)); return keys.map(k => r[k]||''); });
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([heads,...rows]);
   ws['!cols'] = heads.map((_,i) => ({wch:Math.max(heads[i].length+2,...rows.map(r=>String(r[i]||'').length+1),8)}));
@@ -7395,6 +7748,7 @@ async function syncNow() {
   const ok = await loadFromSheets();
   renderSidebar(); renderDashboard();
   if (ok) await offerUploadPending();
+  if (ok) await autoAssignSubjectIds();
   if (ok && currentId !== null) { const rec = records.find(r=>r.id===currentId); if(rec){clearForm();_loadingData=true;loadData(rec);_loadingData=false;isDirty=false;} }
   renderSidebar();
   showToast(ok?`↻ Sync ${records.length} ราย`:'⚠️ Sync ล้มเหลว — ตรวจ URL / รหัสผ่าน / อินเทอร์เน็ต', ok?'var(--teal)':'var(--gold)');
@@ -7983,6 +8337,451 @@ function renderDashboard() {
     `อัปเดต ${new Date().toLocaleString('th-TH')} · ${n} ราย`;
 }
 
+
+var APP_VERSION='v2.1 · 2026-10-31';
+(function(){const e=document.getElementById('app_ver'); if(e) e.textContent=APP_VERSION;})();
+// ═══════════════ PHASE 3 — COMPLETENESS FLAGS ═══════════════
+// Edit the lists below to change what counts as "complete". Nothing here changes saved data.
+// red = a date that KPI / survival needs.  amber = any other missing item.
+var FLAG_COL={green:'var(--teal)',amber:'var(--gold)',red:'var(--accent)',grey:'var(--text3)'};
+var FLAG_NAMES={1:'ข้อมูลผู้ป่วย',2:'อาการและประวัติ',3:'Investigation',4:'Treatment',5:'Diagnosis & Staging'};
+function _fv(r,k){ const v=r[k]; return v!==undefined&&v!==null&&String(v).trim()!==''; }
+function _fparse(x){ try{ const a=JSON.parse(x||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function flagEval(r){
+  const M=(k,label,red)=>_fv(r,k)?null:{label,red:!!red};
+  const any=ks=>ks.some(k=>_fv(r,k));
+  const sess=_fparse(r.cmt_sessions_json).filter(x=>x.aim||x.regimen||x.date_start||x.status);
+  const neo=sess.some(x=>/neo/i.test(x.aim||''));
+  const surg=_fv(r,'date_or'), rt=r.radiation==='yes', endo=r.endocrine==='yes';
+  const T={};
+  // 1 Patient data
+  T[1]={started:any(['hn','firstname','lastname']),items:[M('hn','HN'),M('firstname','ชื่อ'),M('lastname','นามสกุล'),
+    /^\d{13}$/.test(String(r.national_id||''))?null:{label:'เลขบัตรประชาชน 13 หลัก'},
+    M('birthdate','วันเกิด'),M('sex','เพศ'),M('weight','น้ำหนัก'),M('height','ส่วนสูง'),M('insurance','สิทธิ์การรักษา')]};
+  // 2 History
+  T[2]={started:any(['ecog','date_first_visit','side','family_hx','smoking','alcohol','menstruation','pe_tumor_size','symptoms']),
+    items:[M('ecog','ECOG'),M('date_first_visit','วันที่มาพบแพทย์ครั้งแรก'),M('side','ข้างที่เป็น'),M('family_hx','ประวัติครอบครัว'),
+    M('smoking','สูบบุหรี่'),M('alcohol','ดื่มแอลกอฮอล์'),M('menstruation','ประจำเดือน'),M('pe_tumor_size','ขนาดก้อน (PE)')]};
+  // 3 Investigation
+  T[3]={started:any(['date_imaging','mmg_result','us_result','bx_date','bx_subtype','bx_er','met_overall']),
+    items:[M('date_imaging','วันที่ตรวจภาพถ่าย'),(_fv(r,'mmg_result')||_fv(r,'us_result'))?null:{label:'ผลภาพถ่าย (MMG/US)'},
+    M('bx_date','วันที่ biopsy (KPI 5/6)',true),M('bx_patho_date','วันที่ออกผล biopsy (KPI 5)',true),
+    M('bx_subtype','Biopsy: histology'),M('bx_er','Biopsy: ER'),M('bx_pr','Biopsy: PR'),M('bx_her2','Biopsy: HER2'),M('bx_ki67','Biopsy: Ki-67'),
+    M('met_overall','สรุปการตรวจ metastasis')]};
+  // 4 Treatment — a section is checked only after it applies
+  const it4=[];
+  if(surg){
+    it4.push(M('op_side','ผ่าตัด: ข้าง'),M('or_hospital','ผ่าตัด: โรงพยาบาล'),M('slnb_done','SLNB (ทำ/ไม่ทำ)'),
+      M('surg_patho_date','วันที่ผลพยาธิหลังผ่าตัด'),M('surg_subtype','Surg patho: histology'),M('surg_grade','Surg patho: grade'),
+      M('surg_tumor_size','Surg patho: ขนาด'),M('margin_status','Margin'));
+    if(neo) it4.push(M('pcr','pCR'));
+    it4.push(M('radiation','ฉายรังสี (ใช่/ไม่)'),M('endocrine','Endocrine (ใช่/ไม่)'));
+  }
+  sess.forEach((x,i)=>{ const p='เคมี #'+(i+1)+': ';
+    if(!x.aim) it4.push({label:p+'aim'}); if(!x.regimen) it4.push({label:p+'regimen'});
+    if(!x.date_start) it4.push({label:p+'วันที่เริ่ม (KPI 6.2)',red:true}); if(!x.status) it4.push({label:p+'status'});
+    if(/^(Stopped|Completed)/.test(x.status||'')){
+      if(!x.date_end) it4.push({label:p+'วันสุดท้าย'}); if(!x.stop_reason) it4.push({label:p+'เหตุผลที่หยุด'});
+      else if(x.stop_reason==='Other'&&!String(x.stop_other||'').trim()) it4.push({label:p+'เหตุผลที่หยุด (ระบุ)'}); } });
+  if(rt) it4.push(M('date_rt_start','RT: วันเริ่ม (KPI 6.3)',true),M('date_rt_complete','RT: วันสิ้นสุด'),M('rt_regimen','RT: regimen'),M('rt_dose','RT: dose'),M('rt_aim','RT: aim'));
+  if(endo) it4.push(M('endo_regimen','Endocrine: regimen'),M('date_endo','Endocrine: วันเริ่ม'));
+  T[4]={started:surg||sess.length>0||rt||endo||any(['radiation','endocrine','surgery_aim']),items:it4};
+  // 5 Staging
+  const it5=[M('date_dx','วันที่วินิจฉัย (KPI 2 / OS)',true),M('ct_stage','cT'),M('cn_stage','cN'),M('cm_stage','cM'),
+    M('stage_overall','Stage รวม (KPI 2)',true),M('er','Final ER'),M('pr','Final PR'),M('final_mol_subtype','Molecular subtype')];
+  if(surg) it5.push(...(neo?[M('ypt_stage','ypT'),M('ypn_stage','ypN'),M('ypm_stage','ypM')]:[M('pt_stage','pT'),M('pn_stage','pN'),M('pm_stage','pM')]));
+  T[5]={started:any(['date_dx','ct_stage','cn_stage','cm_stage','stage_overall','er','pr','final_mol_subtype','pt_stage','ypt_stage']),items:it5};
+  const out={tabs:{}}; let anyStarted=false, red=false, amber=false, greyOther=false;
+  [1,2,3,4,5].forEach(n=>{ const t=T[n], miss=t.items.filter(Boolean);
+    const rd=miss.filter(x=>x.red), am=miss.filter(x=>!x.red);
+    const state=!t.started?'grey':rd.length?'red':am.length?'amber':'green';
+    out.tabs[n]={state,red:rd.map(x=>x.label),amber:am.map(x=>x.label)};
+    if(t.started) anyStarted=true; if(state==='red') red=true; if(state==='amber') amber=true;
+    if(state==='grey'&&n!==4) greyOther=true; });
+  // one dot per patient = worst colour. A tab that is not started counts as "missing" except Treatment (may still be pending)
+  out.dot=!anyStarted?'grey':red?'red':(amber||greyOther)?'amber':'green';
+  return out;
+}
+function flagDot(r){
+  try{ const ev=flagEval(migrateRecord({...r}));
+    const tip={green:'ข้อมูลครบ',amber:'ยังขาดข้อมูล',red:'ขาดวันที่ที่ใช้คำนวณ KPI',grey:'ยังไม่เริ่มกรอก'}[ev.dot];
+    return `<span class="flag-dot" style="background:${FLAG_COL[ev.dot]}" title="${tip}"></span>`;
+  }catch(e){ return ''; }
+}
+function flagPaint(ev){
+  [1,2,3,4,5].forEach(n=>{
+    const t=ev.tabs[n], b=document.getElementById('flag'+n), note=document.getElementById('flagnote'+n);
+    const cnt=t.state==='red'?t.red.length:t.amber.length;
+    if(b){ b.style.background=FLAG_COL[t.state]; b.textContent=t.state==='green'?'✓':t.state==='grey'?'':cnt; if(t.state==='grey'){b.style.minWidth='9px';b.style.height='9px';b.style.top='4px';b.style.right='4px';} else {b.style.minWidth='15px';b.style.height='15px';b.style.top='1px';b.style.right='1px';} }
+    if(note){
+      const list=(t.red.concat(t.amber)), shown=list.slice(0,10).join(' · ')+(list.length>10?` · … (+${list.length-10})`:'');
+      const msg={green:'🟢 ข้อมูลหมวดนี้ครบแล้ว',grey:'⚪ ยังไม่เริ่มกรอกหมวดนี้',
+        amber:`🟡 ยังขาด ${t.amber.length} รายการ: ${shown}`,
+        red:`🔴 ขาดวันที่ที่ใช้คำนวณ KPI ${t.red.length} รายการ: ${t.red.join(' · ')}`+(t.amber.length?`\n🟡 และขาดอื่นๆ ${t.amber.length}: ${t.amber.slice(0,8).join(' · ')}${t.amber.length>8?' …':''}`:'')}[t.state];
+      note.style.whiteSpace='pre-line'; note.style.borderColor=FLAG_COL[t.state]; note.textContent=msg;
+    }
+  });
+}
+var _flagTimer=null;
+function flagSoon(){ clearTimeout(_flagTimer); _flagTimer=setTimeout(flagRefresh,350); }
+function flagRefresh(){ try{ flagPaint(flagEval(collectData())); }catch(e){} }
+function flagInit(){
+  [1,2,3,4,5].forEach(n=>{
+    const btn=document.getElementById('tab'+n);
+    if(btn&&!document.getElementById('flag'+n)){ const sp=document.createElement('span'); sp.className='flag-badge'; sp.id='flag'+n; btn.appendChild(sp); }
+    const sub=document.querySelector('#panel'+n+' .section-subtitle');
+    if(sub&&!document.getElementById('flagnote'+n)){ const d=document.createElement('div'); d.className='flag-note'; d.id='flagnote'+n; sub.insertAdjacentElement('afterend',d); }
+  });
+  document.addEventListener('input',flagSoon,true); document.addEventListener('change',flagSoon,true);
+  flagRefresh();
+}
+// ═══════════════ PHASE 2 ADDITIONS ═══════════════
+// Treatment sub-tabs
+function showTxSub(name){
+  document.querySelectorAll('.tx-sub').forEach(b=>{ b.style.display=(b.dataset.sub===name)?'':'none'; });
+  document.querySelectorAll('.tx-subbtn').forEach(b=>b.classList.toggle('active',b.dataset.sub===name));
+}
+// Recurrent tab ----------------------------------------------------
+function recPatternText(){
+  const t=checkVals('rec_type'); const loco=t.includes('local')||t.includes('regional'), dist=t.includes('distant');
+  return loco&&dist?'Both':loco?'Locoregional':dist?'Distant':'';
+}
+function recPatternUpdate(){ const e=document.getElementById('rec_pattern_display'); if(e) e.textContent=recPatternText()||'—'; markDirty(); }
+function recSiteToggle(){
+  const on=checkVals('met_site_out').includes('other');
+  const w=document.getElementById('met_site_other_wrap'); if(w) w.style.display=on?'':'none';
+}
+function recRebxToggle(){ const p=document.getElementById('rec_rebx_panel'); if(p) p.style.display=radVal('rec_rebx')==='yes'?'':'none'; }
+function recMolToggle(){ const p=document.getElementById('rec_mol_panel'); if(p) p.style.display=radVal('rec_mol_done')==='done'?'':'none';
+  if(radVal('rec_mol_done')==='done' && !document.querySelector('#rec-mol-rows .rec-row')) addRecMol(); }
+function updateRecLegacy(){
+  const ids=['date_2nd_line','second_line_setting','post_rec_note'];
+  const has=ids.some(i=>{const e=document.getElementById(i);return e&&(e.value||'').trim()!=='';})
+    || !!radVal('post_rec_tx') || checkVals('second_line_agents').length>0;
+  const box=document.getElementById('rec_legacy'); if(box){ box.style.display=has?'':'none'; if(has) box.open=true; }
+}
+function recRefreshUI(){ recPatternUpdate(); recSiteToggle(); recRebxToggle(); recMolToggle(); updateRecLegacy(); _loadingRecUI=false; }
+var _loadingRecUI=false;
+// date helper for rows
+function _recDateField(id,label){
+  return `<div class="field"><label>${label}</label><input type="text" id="${id}" class="date-input" placeholder="วว/ดด/พ.ศ." maxlength="10" autocomplete="off" oninput="onThaiDateInput(this, ()=>{ markDirty() })"></div>`;
+}
+// Molecular rows
+var _recMolN=0;
+function addRecMol(d){
+  const n=++_recMolN, box=document.getElementById('rec-mol-rows'); if(!box) return;
+  const div=document.createElement('div'); div.className='rec-row'; div.id='rec-mol-'+n;
+  div.innerHTML=`<div class="rec-row-head"><span>Test #<span class="rec-idx"></span></span><button type="button" class="rec-del" onclick="removeRecRow('rec-mol-${n}')">✕ ลบ</button></div>
+   <div class="form-grid g2">${_recDateField('rm'+n+'_date','Date')}
+   <div class="field"><label>Result (free text)</label><input type="text" id="rm${n}_result" oninput="markDirty()" placeholder="เช่น PIK3CA mutation"></div></div>`;
+  box.appendChild(div);
+  if(d){ svDate('rm'+n+'_date',d.date||''); document.getElementById('rm'+n+'_result').value=d.result||''; }
+  recRenumber(); markDirty();
+}
+function collectRecMol(){
+  const out=[]; document.querySelectorAll('#rec-mol-rows .rec-row').forEach(row=>{
+    const n=row.id.replace('rec-mol-','');
+    const date=(document.getElementById('rm'+n+'_date')||{dataset:{}}).dataset.iso||'';
+    const result=(document.getElementById('rm'+n+'_result')||{}).value||'';
+    if(date||result.trim()) out.push({date,result});
+  }); return out;
+}
+function restoreRecMol(list){ const b=document.getElementById('rec-mol-rows'); if(b) b.innerHTML=''; _recMolN=0; (list||[]).forEach(x=>addRecMol(x)); }
+// Systemic lines
+var _recLineN=0;
+var REC_RESP=['','SD','PR','CR','PD','N/A'];
+var REC_STOP=['','Complete course','Intolerance','Disease progression','Lost to follow-up','Death','Other'];
+function addRecLine(d){
+  const n=++_recLineN, box=document.getElementById('rec-lines'); if(!box) return;
+  const opt=a=>a.map(v=>`<option value="${v}">${v||'—'}</option>`).join('');
+  const div=document.createElement('div'); div.className='rec-row'; div.id='rec-line-'+n;
+  div.innerHTML=`<div class="rec-row-head"><span>Line <span class="rec-idx"></span></span><button type="button" class="rec-del" onclick="removeRecRow('rec-line-${n}')">✕ ลบ line นี้</button></div>
+   <div class="form-grid g3">
+    <div class="field"><label>Regimen</label><input type="text" id="rl${n}_regimen" oninput="markDirty()" placeholder="เช่น Letrozole + Palbociclib"></div>
+    ${_recDateField('rl'+n+'_start','First cycle date')}
+    ${_recDateField('rl'+n+'_end','Last cycle date')}
+    <div class="field"><label>Total cycles</label><input type="number" min="0" id="rl${n}_cycles" oninput="markDirty()"></div>
+    <div class="field"><label>Maximum response</label><select id="rl${n}_resp" onchange="markDirty()">${opt(REC_RESP)}</select></div>
+    ${_recDateField('rl'+n+'_prog','Date of progression (from this regimen)')}
+    <div class="field"><label>Reason to stop</label><select id="rl${n}_stop" onchange="markDirty();recLineStop(${n})">${opt(REC_STOP)}</select></div>
+    <div class="field" id="rl${n}_stop_other_wrap" style="display:none"><label>Other (ระบุ)</label><input type="text" id="rl${n}_stop_other" oninput="markDirty()"></div>
+    <div class="field" style="grid-column:1/-1"><label>Complications (free text)</label><input type="text" id="rl${n}_comp" oninput="markDirty()"></div>
+   </div>`;
+  box.appendChild(div);
+  if(d){
+    const set=(k,v)=>{const e=document.getElementById('rl'+n+'_'+k); if(e) e.value=v||'';};
+    set('regimen',d.regimen); set('cycles',d.cycles); set('resp',d.resp); set('stop',d.stop); set('stop_other',d.stop_other); set('comp',d.comp);
+    svDate('rl'+n+'_start',d.start||''); svDate('rl'+n+'_end',d.end||''); svDate('rl'+n+'_prog',d.prog||'');
+    recLineStop(n);
+  }
+  recRenumber(); markDirty();
+}
+function recLineStop(n){ const w=document.getElementById('rl'+n+'_stop_other_wrap'); if(w) w.style.display=(document.getElementById('rl'+n+'_stop').value==='Other')?'':'none'; }
+function removeRecRow(id){ const e=document.getElementById(id); if(e) e.remove(); recRenumber(); markDirty(); }
+function recRenumber(){
+  ['rec-lines','rec-mol-rows'].forEach(c=>document.querySelectorAll('#'+c+' .rec-row .rec-idx').forEach((e,i)=>e.textContent=i+1));
+}
+function collectRecLines(){
+  const out=[]; document.querySelectorAll('#rec-lines .rec-row').forEach(row=>{
+    const n=row.id.replace('rec-line-','');
+    const g=k=>(document.getElementById('rl'+n+'_'+k)||{}).value||'';
+    const gi=k=>(document.getElementById('rl'+n+'_'+k)||{dataset:{}}).dataset.iso||'';
+    const o={regimen:g('regimen'),start:gi('start'),end:gi('end'),cycles:g('cycles'),resp:g('resp'),prog:gi('prog'),stop:g('stop'),stop_other:g('stop_other'),comp:g('comp')};
+    if(Object.values(o).some(v=>String(v).trim()!=='')) out.push(o);
+  }); return out;
+}
+function restoreRecLines(list){ const b=document.getElementById('rec-lines'); if(b) b.innerHTML=''; _recLineN=0; (list||[]).forEach(x=>addRecLine(x)); }
+// Excel: flatten first 5 lines + molecular summary
+function recExportHeaders(){
+  const h={rec_mol_summary:'Other molecular tests'};
+  for(let i=1;i<=5;i++){
+    h['rec_l'+i+'_regimen']=`Line ${i} regimen`; h['rec_l'+i+'_start']=`Line ${i} first cycle`; h['rec_l'+i+'_end']=`Line ${i} last cycle`;
+    h['rec_l'+i+'_cycles']=`Line ${i} cycles`; h['rec_l'+i+'_comp']=`Line ${i} complications`; h['rec_l'+i+'_resp']=`Line ${i} max response`;
+    h['rec_l'+i+'_stop']=`Line ${i} reason to stop`; h['rec_l'+i+'_prog']=`Line ${i} progression date`;
+  }
+  h.rec_lines_extra='Lines beyond 5 (JSON)'; return h;
+}
+function recFlat(r){
+  const o={}; let L=[], M=[];
+  try{ L=r.rec_lines_json?JSON.parse(r.rec_lines_json):[]; }catch(e){}
+  try{ M=r.rec_mol_json?JSON.parse(r.rec_mol_json):[]; }catch(e){}
+  L.slice(0,5).forEach((x,k)=>{ const i=k+1;
+    o['rec_l'+i+'_regimen']=x.regimen||''; o['rec_l'+i+'_start']=x.start||''; o['rec_l'+i+'_end']=x.end||''; o['rec_l'+i+'_cycles']=x.cycles||'';
+    o['rec_l'+i+'_comp']=x.comp||''; o['rec_l'+i+'_resp']=x.resp||''; o['rec_l'+i+'_prog']=x.prog||'';
+    o['rec_l'+i+'_stop']=(x.stop==='Other'&&x.stop_other)?('Other: '+x.stop_other):(x.stop||''); });
+  if(L.length>5) o.rec_lines_extra=JSON.stringify(L.slice(5));
+  o.rec_mol_summary=M.map(m=>`${m.date||''} ${m.result||''}`.trim()).join('; ');
+  return o;
+}
+document.getElementById('tx_subbar') && showTxSub('surg');
+
+// ═══════════════ PHASE 1 ADDITIONS ═══════════════
+// National ID (Thai 13-digit with check digit)
+function isValidThaiId(t){
+  if(!/^\d{13}$/.test(t)) return false;
+  let sum=0; for(let i=0;i<12;i++) sum+=Number(t[i])*(13-i);
+  return ((11-(sum%11))%10)===Number(t[12]);
+}
+function validateNationalId(){
+  const el=document.getElementById('national_id'), msg=document.getElementById('national_id_msg');
+  if(!el||!msg) return;
+  const t=el.value||'';
+  if(!t){ msg.textContent=''; return; }
+  if(t.length<13){ msg.style.color='var(--gold)'; msg.textContent='ยังไม่ครบ 13 หลัก ('+t.length+')'; }
+  else if(isValidThaiId(t)){ msg.style.color='var(--teal)'; msg.textContent='✓ เลขตรวจสอบถูกต้อง'; }
+  else { msg.style.color='var(--accent)'; msg.textContent='⚠️ เลขตรวจสอบไม่ถูกต้อง — ตรวจอีกครั้ง (บันทึกได้)'; }
+}
+function onNationalIdInput(el){
+  const c=el.value.replace(/\D/g,'').slice(0,13);
+  if(c!==el.value) el.value=c;
+  validateNationalId(); markDirty();
+}
+// Subject ID  BCA-0001, BCA-0002 …
+function nextSubjectId(){
+  let max=0;
+  records.forEach(r=>{ const m=/^BCA-(\d+)$/.exec(r.subject_id||''); if(m) max=Math.max(max,Number(m[1])); });
+  return 'BCA-'+String(max+1).padStart(4,'0');
+}
+function subjectIdStats(){
+  const seen={}, dup=new Set(); let missing=0;
+  records.forEach(r=>{ if(!r.subject_id){missing++;return;} if(seen[r.subject_id]) dup.add(r.subject_id); seen[r.subject_id]=1; });
+  return {missing, dup:[...dup]};
+}
+// ── Subject ID policy ─────────────────────────────────────────
+// 'merge' : IDs are given ONLY on the merge device (button on Dashboard). Safe for offline teams.
+// 'auto'  : IDs are given automatically after a successful Sync (use only when cloud sync works
+//           and ONE place does the numbering — ideally a counter inside Apps Script).
+const SUBJECT_ID_MODE = 'merge';
+function _createdTime(r){ const t=Date.parse(r._created||''); return isNaN(t)?(r.id||0):t; }
+function normHN(h){ return String(h||'').replace(/\s+/g,'').toLowerCase(); }
+function normName(r){ return (String(r.firstname||'')+String(r.lastname||'')).replace(/\s+/g,'').toLowerCase(); }
+// Give numbers to every patient that has none, oldest first-entry time first. Returns how many.
+function assignSubjectIds(){
+  const todo=records.filter(r=>!r.subject_id)
+    .sort((a,b)=>_createdTime(a)-_createdTime(b)||normHN(a.hn).localeCompare(normHN(b.hn)));
+  const now=new Date().toISOString();
+  todo.forEach(r=>{ r.subject_id=nextSubjectId(); r._modified=now; r._version=(r._version||0)+1; });
+  if(todo.length){ saveLocalCache(); renderSidebar(); renderAdminTools(); }
+  return todo;
+}
+async function pushToSheets(list){
+  if(typeof APPS_SCRIPT_URL!=='undefined' && APPS_SCRIPT_URL){
+    for(const r of list){ try{ await saveToSheets(r); }catch(e){} }
+    return true;
+  } return false;
+}
+// Future-ready: runs after Sync only when SUBJECT_ID_MODE === 'auto'
+async function autoAssignSubjectIds(){
+  if(SUBJECT_ID_MODE!=='auto') return;
+  const done=assignSubjectIds();
+  if(done.length){ await pushToSheets(done); showToast(`🆔 กำหนด Subject ID อัตโนมัติ ${done.length} ราย`,'var(--teal)'); }
+}
+function renderAdminTools(){
+  const el=document.getElementById('dash_admin'); if(!el) return;
+  const st=subjectIdStats();
+  const btn='style="margin-left:8px;background:none;border:1px solid var(--border2);color:var(--text2);border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer"';
+  let h='Subject ID: ';
+  h+= st.missing? `<b style="color:var(--gold)">รอกำหนด ${st.missing} ราย</b> `
+                : '<span style="color:var(--teal)">ครบทุกราย</span> ';
+  if(st.dup.length) h+=`· <b style="color:var(--accent)">ซ้ำ: ${st.dup.join(', ')}</b> `;
+  h+=`<button type="button" onclick="document.getElementById('merge_files').click()" ${btn}>🔗 รวมไฟล์ Backup จากเพื่อนร่วมงาน</button>`;
+  if(st.missing) h+=`<button type="button" onclick="backfillSubjectIds()" ${btn}>🆔 กำหนด Subject ID</button>`;
+  h+=`<input type="file" id="merge_files" accept=".json" multiple style="display:none" onchange="mergeBackupFiles(event)">`;
+  el.innerHTML=h;
+}
+function backfillSubjectIds(){
+  const n=records.filter(r=>!r.subject_id).length; if(!n) return;
+  if(!confirm(`กำหนด Subject ID ให้ผู้ป่วย ${n} ราย (เรียงตามเวลาที่บันทึกครั้งแรก)\n\nทำจากเครื่อง Merge เครื่องเดียวเท่านั้น และกด Backup ก่อน\n\nดำเนินการต่อ?`)) return;
+  const done=assignSubjectIds();
+  pushToSheets(done).then(ok=>showToast(`✅ กำหนด Subject ID ${done.length} ราย`+(ok?' และส่งขึ้น Sheets แล้ว':' (ในเครื่อง)'),'var(--teal)'));
+}
+// ── Merge colleagues' Backup files (match by HN) ──
+function mergeBackupFiles(ev){
+  const files=[...ev.target.files]; ev.target.value=''; if(!files.length) return;
+  Promise.all(files.map(f=>new Promise((res,rej)=>{
+    const rd=new FileReader(); rd.onerror=()=>rej(new Error(f.name));
+    rd.onload=()=>{ try{ const p=JSON.parse(rd.result); const a=p.records||p; if(!Array.isArray(a)) throw 0; res({name:f.name,recs:a}); }catch(e){ rej(new Error('ไฟล์ไม่ถูกต้อง: '+f.name)); } };
+    rd.readAsText(f);
+  }))).then(planMerge).catch(e=>showToast('❌ '+e.message,'var(--accent)'));
+}
+function planMerge(sources){
+  const byId=new Map(records.map(r=>[r.id,r]));
+  const byHN=new Map(); records.forEach(r=>{ const k=normHN(r.hn); if(k) byHN.set(k,r); });
+  const adds=[], conflicts=[], same=[], noHN=[];
+  const seenIncoming=new Map();
+  sources.forEach(src=>src.recs.forEach(raw=>{
+    const inc=migrateRecord({...raw}); inc._src=src.name;
+    if(byId.has(inc.id)){ same.push(inc); return; }
+    const k=normHN(inc.hn);
+    if(!k){ noHN.push(inc); return; }
+    const mine=byHN.get(k)||seenIncoming.get(k);
+    if(mine){ conflicts.push({inc,mine,nameDiff: normName(inc)&&normName(mine)&&normName(inc)!==normName(mine)}); }
+    else { adds.push(inc); seenIncoming.set(k,inc); }
+  }));
+  showMergeDialog({adds,conflicts,same,noHN});
+}
+function showMergeDialog(plan){
+  const old=document.getElementById('merge_dlg'); if(old) old.remove();
+  const nm=r=>`${r.firstname||''} ${r.lastname||''}`.trim()||'(ไม่มีชื่อ)';
+  const when=r=>(r._modified||r._created||'').slice(0,16).replace('T',' ');
+  const rows=plan.conflicts.map((c,i)=>{
+    const newer=Date.parse(c.inc._modified||0)>Date.parse(c.mine._modified||0)?'inc':'mine';
+    return `<div style="border:1px solid var(--border2);border-radius:8px;padding:8px 10px;margin:6px 0">
+      <div><b>HN ${c.inc.hn}</b> ${c.nameDiff?'<span style="color:var(--accent)">⚠️ ชื่อไม่ตรงกัน — ตรวจให้แน่ใจว่าเป็นคนเดียวกัน</span>':''}</div>
+      <div style="font-size:11px;color:var(--text3)">ในเครื่อง: ${nm(c.mine)} · แก้ล่าสุด ${when(c.mine)}<br>ไฟล์ ${c.inc._src}: ${nm(c.inc)} · แก้ล่าสุด ${when(c.inc)}</div>
+      <select id="mg_c${i}" style="margin-top:4px">
+        <option value="mine"${newer==='mine'?' selected':''}>ใช้ของในเครื่อง</option>
+        <option value="inc"${newer==='inc'?' selected':''}>ใช้ของจากไฟล์</option>
+        <option value="both">เก็บทั้งสอง (เป็น 2 ราย)</option></select></div>`; }).join('');
+  const d=document.createElement('div'); d.id='merge_dlg';
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML=`<div style="background:var(--surface,#161b22);color:var(--text);border:1px solid var(--border2);border-radius:12px;max-width:640px;width:100%;max-height:85vh;overflow:auto;padding:18px;font-size:13px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:8px">🔗 สรุปการรวมไฟล์</div>
+    <div>• ผู้ป่วยใหม่ที่จะเพิ่ม: <b>${plan.adds.length}</b> ราย<br>• มีอยู่แล้ว (เหมือนเดิม): ${plan.same.length} ราย<br>
+    • HN ซ้ำ ต้องเลือก: <b style="color:${plan.conflicts.length?'var(--gold)':'inherit'}">${plan.conflicts.length}</b> ราย
+    ${plan.noHN.length?`<br>• ไม่มี HN (ข้ามไป ไม่รวม): <b style="color:var(--accent)">${plan.noHN.length}</b> ราย`:''}</div>
+    ${rows}
+    <label style="display:block;margin-top:10px"><input type="checkbox" id="mg_assign" checked> กำหนด Subject ID ให้ผู้ป่วยที่ยังไม่มี ทันทีหลังรวม (เรียงตามเวลาบันทึกครั้งแรก)</label>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">ระบบจะดาวน์โหลด Backup ของข้อมูลปัจจุบันให้ก่อนรวมเสมอ</div>
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+      <button type="button" onclick="document.getElementById('merge_dlg').remove()">ยกเลิก</button>
+      <button type="button" id="mg_ok" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer">รวมข้อมูล</button></div></div>`;
+  document.body.appendChild(d);
+  document.getElementById('mg_ok').onclick=()=>applyMerge(plan);
+}
+async function applyMerge(plan){
+  if(records.length) backupJSON();
+  const touched=[];
+  const clean=r=>{ const c={...r}; delete c._src; return c; };
+  plan.adds.forEach(r=>{ records.push(clean(r)); touched.push(r); });
+  plan.conflicts.forEach((c,i)=>{
+    const ch=(document.getElementById('mg_c'+i)||{}).value||'mine';
+    if(ch==='inc'){ const idx=records.findIndex(x=>x.id===c.mine.id);
+      if(idx>=0){ const keep=records[idx]; const n=clean(c.inc); n.id=keep.id; n.subject_id=keep.subject_id||n.subject_id||''; n.hn=keep.hn; if(_createdTime(keep)<_createdTime(n)) n._created=keep._created;
+        n._version=Math.max(keep._version||0,n._version||0)+1; records[idx]=n; touched.push(n); }
+      else { records.push(clean(c.inc)); touched.push(c.inc); } }
+    else if(ch==='both'){ const n=clean(c.inc); n.subject_id=''; records.push(n); touched.push(n); }
+  });
+  let assigned=[];
+  if(document.getElementById('mg_assign').checked) assigned=assignSubjectIds();
+  saveLocalCache(); renderSidebar(); renderDashboard(); renderAdminTools();
+  document.getElementById('merge_dlg').remove();
+  const up=await pushToSheets([...new Set([...touched,...assigned])]);
+  showToast(`✅ รวมข้อมูลแล้ว — ผู้ป่วยทั้งหมด ${records.length} ราย`+(assigned.length?` · กำหนด Subject ID ${assigned.length} ราย`:'')+(up?' · ส่งขึ้น Sheets แล้ว':''),'var(--teal)');
+}
+const _renderDashboard_p1 = renderDashboard;
+renderDashboard = function(){ _renderDashboard_p1.apply(this,arguments); renderAdminTools(); };
+// ── KPI definition boxes (one source of truth: KPI_HELP) ──
+// Wording follows the engine in _kpiPatient(); change a rule there → update the text here.
+const KPI_HELP = {
+  k2:  { title:'KPI 2 — สัดส่วนระยะ 1+2', target:'≥ 74%',
+         what:'ผู้ป่วยรายใหม่ที่วินิจฉัยในปีนั้น เป็นมะเร็งระยะ 1–2 กี่เปอร์เซ็นต์ (ยิ่งสูงแปลว่าตรวจพบเร็ว)',
+         calc:'ผ่าน = จำนวนที่เป็นระยะ IA, IB, IIA, IIB ÷ จำนวนที่เป็นระยะ 1–4 ทั้งหมด × 100',
+         year:'ปีที่วินิจฉัย (Date of diagnosis)',
+         excl:'ไม่นับ: ระยะ 0 (DCIS), ยังไม่กรอก stage, ไม่มีวันที่วินิจฉัย' },
+  k25: { title:'KPI 2.5 — ส่งตรวจ BRCA ตามเกณฑ์', target:'(ตามเกณฑ์ NCI)',
+         what:'บอกว่าผู้ป่วยรายนี้เข้าเกณฑ์ที่ควรส่งตรวจพันธุกรรม BRCA หรือไม่ (ช่องนี้เป็นการเตือน ไม่ใช่ตัวเลขร้อยละ)',
+         calc:'เข้าเกณฑ์เมื่อ: อายุตอนวินิจฉัย ≤ 45 ปี, หรือเป็น Triple-Negative, หรือเป็นมะเร็งเต้านมในผู้ชาย, หรืออายุ ≥ 46 ปีและมีประวัติครอบครัวเป็นมะเร็งเต้านม/รังไข่',
+         year:'—', excl:'ต้องกรอกวันเกิดและวันที่วินิจฉัยก่อน จึงจะคำนวณได้' },
+  k5:  { title:'KPI 5 — ผลพยาธิวิทยา ≤ 14 วัน', target:'≥ 80%',
+         what:'หลังตัดชิ้นเนื้อ ได้ผลพยาธิวิทยาภายใน 14 วันหรือไม่',
+         calc:'จำนวนวัน = วันที่ออกผลพยาธิ − วันที่ตัดชิ้นเนื้อ ; ผ่านเมื่อ ≤ 14 วัน',
+         year:'ปีที่ตัดชิ้นเนื้อ',
+         excl:'ไม่นับ: วันที่ไม่ครบ, ผลออกก่อนวันตัด (ติดลบ), หรือเกิน 365 วัน (น่าจะกรอกวันที่ผิด)' },
+  k61: { title:'KPI 6.1 — ผ่าตัด ≤ 28 วัน', target:'≥ 70%',
+         what:'ผ่าตัดภายใน 28 วันหลังจุดเริ่มต้นนับ',
+         calc:'จำนวนวัน = วันผ่าตัด − จุดเริ่มต้นนับ ; ผ่านเมื่อ ≤ 28 วัน\nจุดเริ่มต้น = วันสุดท้ายของเคมี/รังสีก่อนผ่าตัด (ถ้ามี) ถ้าไม่มีใช้วันตัดชิ้นเนื้อ ถ้าไม่มีอีกใช้วันตรวจภาพถ่าย',
+         year:'ปีที่ผ่าตัด',
+         excl:'ไม่นับ: วันที่ไม่ครบ, ติดลบ, หรือเกิน 3,650 วัน' },
+  k62: { title:'KPI 6.2 — เคมีบำบัด ≤ 42 วัน', target:'≥ 70%',
+         what:'เริ่มเคมีบำบัดครั้งแรกภายใน 42 วันหลังจุดเริ่มต้นนับ',
+         calc:'จำนวนวัน = วันเริ่มเคมีครั้งแรก − จุดเริ่มต้นนับ ; ผ่านเมื่อ ≤ 42 วัน\nจุดเริ่มต้น = วันผ่าตัด หรือวันสุดท้ายของรังสีก่อนหน้า (ถ้ามี) ไม่เช่นนั้นใช้วันตัดชิ้นเนื้อ/วันตรวจภาพถ่าย',
+         year:'ปีที่เริ่มเคมีครั้งแรก',
+         excl:'ไม่นับ: ผู้ป่วยปฏิเสธ/ส่งต่อ, เคมี 2nd-line ขึ้นไป (palliative), วันที่ไม่ครบ' },
+  k63: { title:'KPI 6.3 (= KPI 3) — รังสีรักษา ≤ 42 วัน', target:'≥ 60%',
+         what:'เริ่มฉายรังสีภายใน 42 วันหลังจุดเริ่มต้นนับ',
+         calc:'จำนวนวัน = วันเริ่มฉายรังสี − จุดเริ่มต้นนับ ; ผ่านเมื่อ ≤ 42 วัน\nจุดเริ่มต้น = วันผ่าตัด หรือวันสุดท้ายของเคมีก่อนหน้า (ถ้ามี) ไม่เช่นนั้นใช้วันตัดชิ้นเนื้อ/วันตรวจภาพถ่าย',
+         year:'ปีที่เริ่มฉายรังสี',
+         excl:'ไม่นับ: ผู้ป่วยปฏิเสธ/ส่งต่อรังสี, วันที่ไม่ครบ' },
+};
+const KPI_HELP_NOTE = 'ถ้าวันสุดท้ายของเคมี/รังสีไม่ได้กรอก ระบบใช้วันเริ่มแทน และจะแสดงว่า "ประมาณ" · ปีงบประมาณนับ 1 ต.ค. – 30 ก.ย.';
+function kpiHelpHTML(ids, open){
+  const row=(h,t)=>t?`<div style="margin-top:5px"><b style="color:var(--text2)">${h}</b> ${String(t).replace(/\n/g,'<br>')}</div>`:'';
+  return `<details class="kpi-help"${open?' open':''}><summary>ⓘ ${ids.length===1?'KPI คืออะไร / คำนวณอย่างไร':'นิยามและวิธีคำนวณ KPI'}</summary>`
+    + ids.map(id=>{const k=KPI_HELP[id];
+        return `<div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">${k.title} <span style="font-weight:400;color:var(--text3)">· เป้าหมาย ${k.target}</span></div>`
+          + row('คืออะไร:',k.what)+row('คำนวณ:',k.calc)+row('นับเข้าปีไหน:',k.year)+row('ข้อยกเว้น:',k.excl)+`</div>`;}).join('')
+    + `<div style="margin-top:8px;color:var(--text3)">${KPI_HELP_NOTE}</div></details>`;
+}
+function fillKpiHelp(){
+  const place=(kid,anchorId)=>{
+    const a=document.getElementById(anchorId); if(!a||document.getElementById('kh_'+kid)) return;
+    const host=a.closest('.field')||a.parentElement;
+    const d=document.createElement('div'); d.id='kh_'+kid; d.innerHTML=kpiHelpHTML([kid],false); d.style.gridColumn='1 / -1';
+    host.insertAdjacentElement('afterend',d);
+  };
+  place('k25','kpi_brca_eligible'); place('k5','kpi_patho2wk'); place('k61','kpi_or4wk');
+  place('k62','kpi_cmt6wk'); place('k63','kpi_rt6wk'); place('k2','stage_overall');
+  const dk=document.getElementById('dash_kpi');
+  if(dk && !document.getElementById('kh_dash')){ const d=document.createElement('div'); d.id='kh_dash';
+    d.innerHTML=kpiHelpHTML(['k2','k5','k61','k62','k63'],false); dk.insertAdjacentElement('beforebegin',d); }
+  const kb=document.getElementById('kpi_dash_result');
+  if(kb && !document.getElementById('kh_dash2')){ const d=document.createElement('div'); d.id='kh_dash2';
+    d.innerHTML=kpiHelpHTML(['k2','k5','k61','k62','k63'],false); kb.insertAdjacentElement('beforebegin',d); }
+}
+// Metastasis work-up: show legacy block only when old data exists
+function updateMwuLegacy(){
+  const ids=['mwu_ct_cap_date','mwu_ct_cap_result','mwu_ct_cap_note','mwu_brain_date','mwu_brain_result','mwu_brain_note','mwu_liver_date','mwu_liver_result','mwu_liver_note'];
+  const has=ids.some(i=>{const e=document.getElementById(i);return e&&(e.value||'').trim()!=='';});
+  const box=document.getElementById('mwu_legacy'); if(box) box.style.display=has?'':'none';
+}
+// AJCC edition note
+function ajccEditionNote(){
+  const v=(document.getElementById('ajcc_edition')||{}).value||'';
+  const n=document.getElementById('ajcc_note'); if(n) n.style.display=(v==='7th'||v==='other')?'':'none';
+}
+fillKpiHelp();
+flagInit();
 </script>
 </body>
 </html>
