@@ -3776,6 +3776,7 @@
     <div class="tab-panel" id="panel6">
       <h2 class="section-title">Recurrent / Metastatic Disease</h2>
       <p class="section-subtitle">กลับเป็นซ้ำ หรือแพร่กระจาย — ผู้ป่วยบางรายเกิดหลังวินิจฉัยหลายเดือน–หลายปี จึงแสดงแท็บนี้ตลอด · ถ้าไม่มีให้เว้นว่างได้</p>
+      <details class="kpi-help"><summary>ⓘ นิยามที่ใช้ในแท็บนี้ (Data dictionary · ร่าง)</summary><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Recurrence · กลับเป็นซ้ำ</div><div style="margin-top:3px">มะเร็งเต้านมเดิมกลับมาหลังการรักษาด้วยการผ่าตัด (มีช่วงปลอดโรคมาก่อน) ยืนยันด้วยชิ้นเนื้อ/cytology หรือภาพถ่ายที่ชัดเจนและแพทย์สรุปไว้ในเวชระเบียน</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Date of recurrence · วันที่กลับเป็นซ้ำ</div><div style="margin-top:3px">วันที่ของภาพถ่ายหรือชิ้นเนื้อครั้งแรกที่พบรอยโรค ซึ่งต่อมายืนยันว่าเป็นการกลับเป็นซ้ำ (ใช้วันที่เก่าที่สุด) · ไม่ใช่วันเริ่มมีอาการ และไม่ใช่วันเริ่มรักษา · วันนี้ใช้คำนวณ DFS</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">ไม่นับเป็น recurrence</div><div style="margin-top:3px">① tumour marker (CA 15-3, CEA) สูงขึ้นอย่างเดียว ไม่มีภาพหรือชิ้นเนื้อรองรับ → บันทึกในตาราง tumour marker ② มะเร็งเต้านมข้างตรงข้ามที่เป็นมะเร็งใหม่ (new primary) → บันทึกใน Remarks ③ ผู้ป่วยที่แพร่กระจายตั้งแต่วินิจฉัย (de novo)</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Pattern · รูปแบบ</div><div style="margin-top:3px">Local = เต้านมข้างเดิม / ผนังทรวงอก / แผลผ่าตัด · Regional = ต่อมน้ำเหลืองข้างเดียวกัน (รักแร้, supraclavicular, internal mammary) · Distant = อวัยวะอื่น · ติ๊กได้หลายช่องถ้าพบพร้อมกัน</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">ข้อที่ทีมยังต้องตกลงกัน</div><div style="margin-top:3px">(1) ใช้วันตรวจภาพ หรือวันออกผลชิ้นเนื้อ เป็นวัน recurrence · (2) ต่อมน้ำเหลืองข้างตรงข้ามนับเป็น Regional หรือ Distant · (3) ถ้าตกลงแล้ว บอกผู้พัฒนาเพื่อแก้ข้อความในกล่องนี้</div></div><div style="margin-top:8px;color:var(--text3)">ร่างกติกาของ registry — ทีมควรยืนยันร่วมกันก่อนใช้ทำวิจัย (ไม่ใช่คำอ้างอิงจากวารสาร)</div></details>
 
       <div class="subsection" style="border-left:3px solid var(--accent)">
         <div class="subsection-title">Basic information</div>
@@ -3827,6 +3828,7 @@
 
       <div class="subsection">
         <div class="subsection-title">Re-biopsy</div>
+        <details class="kpi-help"><summary>ⓘ Re-biopsy คืออะไร / กรอกอย่างไร</summary><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">หนึ่งแถว = การตัด/เจาะชิ้นเนื้อหนึ่งครั้ง</div><div style="margin-top:3px">ทำหลังกลับเป็นซ้ำหรือโรคลุกลาม · ถ้าตรวจหลายตำแหน่งหรือหลายครั้ง กด "+ เพิ่ม" ทีละแถว</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Biopsy site · ตำแหน่งชิ้นเนื้อ</div><div style="margin-top:3px">ตำแหน่งที่เอาชิ้นเนื้อมา (ไม่ใช่ทุกตำแหน่งที่มีโรค) · สำคัญเพราะ ER/PR/HER2 อาจต่างกันระหว่างก้อนที่เต้านมกับที่ตับ</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Date · วันที่</div><div style="margin-top:3px">วันที่ทำหัตถการเก็บชิ้นเนื้อ (ไม่ใช่วันออกผล)</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">ER / PR / HER2 / Ki-67</div><div style="margin-top:3px">ผลของชิ้นเนื้อครั้งนั้น ใช้เทียบกับ biopsy และผลผ่าตัดครั้งแรก</div></div><div style="margin-top:8px;color:var(--text3)">ร่างกติกาของ registry — ทีมควรยืนยันร่วมกันก่อนใช้ทำวิจัย (ไม่ใช่คำอ้างอิงจากวารสาร)</div></details>
         <div class="field">
           <div class="radio-group">
             <label><input type="radio" name="rec_rebx" value="yes" onchange="markDirty();recRebxToggle()"> Yes</label>
@@ -3834,13 +3836,8 @@
           </div>
         </div>
         <div id="rec_rebx_panel" style="display:none;margin-top:10px">
-          <div class="form-grid g3">
-            <div class="field"><label>Pathology</label><input type="text" id="rec_rebx_patho" oninput="markDirty()" placeholder="เช่น IDC"></div>
-            <div class="field"><label>ER</label><select id="rec_rebx_er" onchange="markDirty()"><option value="">—</option><option>Positive</option><option>Negative</option><option>N/A</option></select></div>
-            <div class="field"><label>PR</label><select id="rec_rebx_pr" onchange="markDirty()"><option value="">—</option><option>Positive</option><option>Negative</option><option>N/A</option></select></div>
-            <div class="field"><label>HER2</label><select id="rec_rebx_her2" onchange="markDirty()"><option value="">—</option><option>0</option><option>1+</option><option>2+ (ISH negative)</option><option>2+ (ISH positive)</option><option>3+</option><option>N/A</option></select></div>
-            <div class="field"><label>Ki-67 (%)</label><input type="text" id="rec_rebx_ki67" inputmode="decimal" oninput="markDirty()" placeholder="%"></div>
-          </div>
+          <div id="rec-bx-rows"></div>
+          <button type="button" class="rec-add" onclick="addRecBx()">+ เพิ่มการตรวจชิ้นเนื้อ (re-biopsy)</button>
         </div>
       </div>
 
@@ -3920,10 +3917,22 @@
             </select>
           </div>
           <div class="field">
-            <label>Date of last follow-up <span style="font-size:10px;color:var(--text3)">(ทุก scenario)</span></label>
+            <label>Date of last follow-up / contact <span style="font-size:10px;color:var(--text3)">(ทุก scenario · ถ้าเสียชีวิต = วันที่เสียชีวิต)</span></label>
             <input type="text" id="date_last_fu" class="date-input" placeholder="วว/ดด/พ.ศ."
               maxlength="10" autocomplete="off"
               oninput="onThaiDateInput(this, ()=>{ calcSurvival() })">
+          </div>
+          <div class="field">
+            <label>Source of last contact <span style="font-size:10px;color:var(--text3)">(ได้ข้อมูลจากไหน)</span></label>
+            <select id="fu_source" onchange="markDirty();fuSrcToggle()">
+              <option value="">—เลือก—</option>
+              <option>Clinic visit</option>
+              <option>Phone call</option>
+              <option>Hospital record</option>
+              <option>Death record</option>
+              <option>Other</option>
+            </select>
+            <input type="text" id="fu_source_other" style="display:none;margin-top:6px" oninput="markDirty()" placeholder="ระบุแหล่งข้อมูล">
           </div>
           <div class="field" id="death_panel" style="display:none">
             <label>Cause of death</label>
@@ -3948,6 +3957,8 @@
             </select>
           </div>
         </div>
+
+        <details class="kpi-help"><summary>ⓘ Last contact และ Status คืออะไร (Data dictionary · ร่าง)</summary><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Date of last contact · วันติดต่อล่าสุด</div><div style="margin-top:3px">วันล่าสุดที่เรารู้สถานะผู้ป่วยแน่ชัด: มาตรวจ, โทรถาม, พบบันทึกในเวชระเบียน/ระบบโรงพยาบาล หรือทะเบียนมรณบัตร · ไม่ใช่วันนัดครั้งต่อไป</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">ถ้าเสียชีวิต</div><div style="margin-top:3px">ใส่ "วันที่เสียชีวิต" ในช่องนี้ (ระบบใช้เป็นวันสิ้นสุดของ OS)</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Source of last contact · ได้ข้อมูลจากไหน</div><div style="margin-top:3px">ช่วยแยกผู้ป่วยที่ "ยืนยันสถานะแล้ว" ออกจากผู้ป่วยที่ "ไม่เห็นหน้ามานาน" ซึ่งทำให้อัตรารอดชีวิตดูดีเกินจริง</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Loss to follow-up</div><div style="margin-top:3px">ไม่มีข้อมูลการติดต่อเกิน 12 เดือน ทั้งที่พยายามติดตามแล้ว (ตัวเลข 12 เดือนเป็นร่าง — ทีมยืนยัน)</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">ระบบคำนวณอย่างไร</div><div style="margin-top:3px">ไม่มี recurrence → ตัดสิ้นสุด (censor = นับเวลาถึงวันนั้น ไม่นับเป็นเหตุการณ์) ที่วันติดต่อล่าสุด · มี recurrence → DFS เกิดเหตุการณ์ที่วันกลับเป็นซ้ำ · เสียชีวิตโดยไม่มีบันทึก recurrence → นับการเสียชีวิตเป็นเหตุการณ์ของ DFS</div></div><div style="margin-top:8px;color:var(--text3)">ร่างกติกาของ registry — ทีมควรยืนยันร่วมกันก่อนใช้ทำวิจัย (ไม่ใช่คำอ้างอิงจากวารสาร)</div></details>
 
         <!-- Scenario indicator -->
         <div id="scenario_badge" style="display:none;padding:10px 14px;border-radius:var(--radius);margin-bottom:14px;font-size:12px;font-weight:600"></div>
@@ -7019,8 +7030,7 @@ function collectData() {
     ajcc_edition:v('ajcc_edition'),ecog_last_fu:v('ecog_last_fu'),
     rec_met_at_dx:radVal('rec_met_at_dx'),rec_pattern:recPatternText(),ecog_rec:v('ecog_rec'),
     rec_img:checkVals('rec_img').join(', '),met_site_other_text:v('met_site_other_text'),
-    rec_rebx:radVal('rec_rebx'),rec_rebx_patho:v('rec_rebx_patho'),rec_rebx_er:v('rec_rebx_er'),rec_rebx_pr:v('rec_rebx_pr'),
-    rec_rebx_her2:v('rec_rebx_her2'),rec_rebx_ki67:v('rec_rebx_ki67'),
+    rec_rebx:radVal('rec_rebx'),rec_bx_json:JSON.stringify(collectRecBx()),
     rec_mol_done:radVal('rec_mol_done'),rec_mol_json:JSON.stringify(collectRecMol()),
     rec_lines_json:JSON.stringify(collectRecLines()),rec_total_regimens:v('rec_total_regimens'),rec_lines_remark:v('rec_lines_remark'),
     birthdate:vd('birthdate'),age:v('age'),age_at_dx:v('age_at_dx'),sex:v('sex'),
@@ -7171,7 +7181,7 @@ function collectData() {
     date_rt_start:vd('date_rt_start'),date_rt_complete:vd('date_rt_complete'),kpi_rt6wk:v('kpi_rt6wk'),
     rt_regimen:v('rt_regimen'),rt_dose:v('rt_dose'),rt_hospital:v('rt_hospital'),rt_aim:v('rt_aim'),rt_memo:v('rt_memo'),
     // Survival
-    status:v('status'),date_last_fu:vd('date_last_fu'),cause_of_death:v('cause_of_death'),
+    status:v('status'),date_last_fu:vd('date_last_fu'),fu_source:v('fu_source'),fu_source_other:v('fu_source_other'),cause_of_death:v('cause_of_death'),
     recurrence:radVal('recurrence'),date_recurrence:vd('date_recurrence'),
     rec_type:checkVals('rec_type').join(', '),met_site_out:checkVals('met_site_out').join(', '),
     pcr:radVal('pcr'),
@@ -7262,6 +7272,10 @@ function migrateRecord(d) {
     d.bx_ki67 = ki67TextMap[d.bx_ki67];
   }
 
+  // ── Migration (v2.4): old single re-biopsy fields -> rec_bx_json row 1 ──
+  if (!d.rec_bx_json && (d.rec_rebx_patho || d.rec_rebx_er || d.rec_rebx_pr || d.rec_rebx_her2 || d.rec_rebx_ki67)) {
+    d.rec_bx_json = JSON.stringify([{ date:'', site:'', site_other:'', patho:d.rec_rebx_patho||'', er:d.rec_rebx_er||'', pr:d.rec_rebx_pr||'', her2:d.rec_rebx_her2||'', ki67:d.rec_rebx_ki67||'' }]);
+  }
   // ── Migration: status 'alive' → 'alive_no_rec' ──
   // Old form had simple 'alive'/'dead'; new form uses 3-way status
   if (d.status === 'alive') {
@@ -7328,6 +7342,7 @@ function loadData(d) {
   if (d.her2_sessions_json) { try { restoreHer2Sessions(JSON.parse(d.her2_sessions_json)); } catch(e) { restoreHer2Sessions([]); } }
   else restoreHer2Sessions([]);
   try { restoreRecMol(d.rec_mol_json ? JSON.parse(d.rec_mol_json) : []); } catch(e) { restoreRecMol([]); }
+  try { restoreRecBx(d.rec_bx_json ? JSON.parse(d.rec_bx_json) : []); } catch(e) { restoreRecBx([]); }
   try { restoreRecLines(d.rec_lines_json ? JSON.parse(d.rec_lines_json) : []); } catch(e) { restoreRecLines([]); }
   // Tumor marker follow-up rows
   if (d.tm_json) { try { buildTumorMarkers(JSON.parse(d.tm_json)); } catch(e) { buildTumorMarkers(null); } }
@@ -7436,7 +7451,7 @@ function clearForm() {
   restoreSpPanels([]);
   restoreStgPanels([]);
   restoreCmtSessions([]);
-  restoreRecMol([]); restoreRecLines([]);
+  restoreRecMol([]); restoreRecLines([]); restoreRecBx([]);
   restoreDish([]);
   restoreHer2Sessions([]);
   buildTumorMarkers(null);
@@ -7667,7 +7682,7 @@ function exportExcel() {
     date_first_visit:'Date 1st visit',symptom_duration:'ระยะอาการ',symptoms:'อาการ',side:'ข้าง',
     smoking:'Smoking',smoking_pack_years:'Pack-years',alcohol:'Alcohol',alcohol_frequency:'Alcohol freq',
     family_hx:'Family hx',brca:'BRCA',
-    pe_tumor_size:'PE size(cm)',pe_tumor_char:'ลักษณะก้อน',pe_skin:'Skin',pe_axilla:'Axilla PE',ecog:'ECOG (1st visit)',ecog_last_fu:'ECOG (last f/u)',rec_met_at_dx:'Met at diagnosis',rec_pattern:'Recurrence pattern',ecog_rec:'ECOG (recurrence)',rec_img:'Rec imaging used',met_site_other_text:'Met site other',rec_rebx:'Re-biopsy',rec_rebx_patho:'Re-bx pathology',rec_rebx_er:'Re-bx ER',rec_rebx_pr:'Re-bx PR',rec_rebx_her2:'Re-bx HER2',rec_rebx_ki67:'Re-bx Ki67',rec_mol_done:'Other molecular testing',rec_total_regimens:'Total regimens (rec)',rec_lines_remark:'Rec lines remark',ajcc_edition:'AJCC edition',
+    pe_tumor_size:'PE size(cm)',pe_tumor_char:'ลักษณะก้อน',pe_skin:'Skin',pe_axilla:'Axilla PE',ecog:'ECOG (1st visit)',ecog_last_fu:'ECOG (last f/u)',rec_met_at_dx:'Met at diagnosis',rec_pattern:'Recurrence pattern',ecog_rec:'ECOG (recurrence)',rec_img:'Rec imaging used',met_site_other_text:'Met site other',rec_rebx:'Re-biopsy',rec_mol_done:'Other molecular testing',rec_total_regimens:'Total regimens (rec)',rec_lines_remark:'Rec lines remark',ajcc_edition:'AJCC edition',
     bx_date:'Date biopsy',bx_subtype:'Biopsy subtype',bx_grade:'Biopsy grade',
     bx_er:'ER(bx)',bx_pr:'PR(bx)',bx_her2:'HER2(bx)',bx_ki67:'KI67(bx)',bx_mol_subtype:'Mol subtype(bx)',
     bx_panels_json:'Biopsy per-lesion (JSON)',sp_panels_json:'Surgical patho per-lesion (JSON)',stg_panels_json:'Staging per-lesion (JSON)',
@@ -7706,7 +7721,7 @@ function exportExcel() {
     echo_lvef_0:'Echo LVEF(baseline)',echo_lvef_pt:'Echo LVEF(post)',echo_lvef_6m:'Echo LVEF(6mo)',
     echo_lvef_12m:'Echo LVEF(12mo)',echo_lvef_18m:'Echo LVEF(18mo)',echo_lvef_24m:'Echo LVEF(24mo)',
     date_rt_start:'RT start',date_rt_complete:'RT finish',rt_regimen:'RT regimen',rt_aim:'RT aim',rt_memo:'RT memo',
-    status:'Status',date_last_fu:'Last FU',cause_of_death:'Cause of death',
+    status:'Status',date_last_fu:'Last FU',fu_source:'Last-contact source',cause_of_death:'Cause of death',
     recurrence:'Recurrence',date_recurrence:'Date recurrence',rec_type:'Recurrence type',
     pcr:'pCR',
     dfs_start:'DFS start',dfs_end:'DFS end',dfs_months:'DFS(mo)',dfs_event:'DFS event',
@@ -8340,7 +8355,7 @@ function renderDashboard() {
 }
 
 
-var APP_VERSION='v2.3 · 2026-11-01';
+var APP_VERSION='v2.4 · 2026-11-01';
 (function(){const e=document.getElementById('app_ver'); if(e) e.textContent=APP_VERSION;})();
 // Floating Save button: visible on every tab except Dashboard; turns amber while there are unsaved changes
 function floatSaveRefresh(){
@@ -8536,7 +8551,9 @@ function recSiteToggle(){
   const on=checkVals('met_site_out').includes('other');
   const w=document.getElementById('met_site_other_wrap'); if(w) w.style.display=on?'':'none';
 }
-function recRebxToggle(){ const p=document.getElementById('rec_rebx_panel'); if(p) p.style.display=radVal('rec_rebx')==='yes'?'':'none'; }
+function recRebxToggle(){ const p=document.getElementById('rec_rebx_panel'); if(p) p.style.display=radVal('rec_rebx')==='yes'?'':'none';
+  if(radVal('rec_rebx')==='yes' && !document.querySelector('#rec-bx-rows .rec-row')) addRecBx(); }
+function fuSrcToggle(){ const s=document.getElementById('fu_source'), o=document.getElementById('fu_source_other'); if(s&&o) o.style.display=(s.value==='Other')?'':'none'; }
 function recMolToggle(){ const p=document.getElementById('rec_mol_panel'); if(p) p.style.display=radVal('rec_mol_done')==='done'?'':'none';
   if(radVal('rec_mol_done')==='done' && !document.querySelector('#rec-mol-rows .rec-row')) addRecMol(); }
 function updateRecLegacy(){
@@ -8545,7 +8562,7 @@ function updateRecLegacy(){
     || !!radVal('post_rec_tx') || checkVals('second_line_agents').length>0;
   const box=document.getElementById('rec_legacy'); if(box){ box.style.display=has?'':'none'; if(has) box.open=true; }
 }
-function recRefreshUI(){ recPatternUpdate(); recSiteToggle(); recRebxToggle(); recMolToggle(); updateRecLegacy(); _loadingRecUI=false; }
+function recRefreshUI(){ recPatternUpdate(); recSiteToggle(); recRebxToggle(); recMolToggle(); fuSrcToggle(); updateRecLegacy(); _loadingRecUI=false; }
 var _loadingRecUI=false;
 // date helper for rows
 function _recDateField(id,label){
@@ -8572,6 +8589,50 @@ function collectRecMol(){
   }); return out;
 }
 function restoreRecMol(list){ const b=document.getElementById('rec-mol-rows'); if(b) b.innerHTML=''; _recMolN=0; (list||[]).forEach(x=>addRecMol(x)); }
+// Re-biopsy rows (v2.4): date, site of tissue, pathology, ER/PR/HER2/Ki-67
+var _recBxN=0;
+var REC_BX_SITES=['','Local (breast / chest wall / scar)','Regional lymph node','Skin','Bone','Liver','Lung','Pleura','Brain','Adrenal','Other'];
+function addRecBx(d){
+  const n=++_recBxN, box=document.getElementById('rec-bx-rows'); if(!box) return;
+  const opt=a=>a.map(v=>`<option value="${v}">${v||'—'}</option>`).join('');
+  const sel=(id,arr)=>`<select id="${id}" onchange="markDirty()">${opt(arr)}</select>`;
+  const div=document.createElement('div'); div.className='rec-row'; div.id='rec-bx-'+n;
+  div.innerHTML=`<div class="rec-row-head"><span>Re-biopsy #<span class="rec-idx"></span></span><button type="button" class="rec-del" onclick="removeRecRow('rec-bx-${n}')">✕ ลบ</button></div>
+   <div class="form-grid g3">
+    ${_recDateField('rb'+n+'_date','Date of biopsy (วันที่ทำหัตถการ)')}
+    <div class="field"><label>Biopsy site (ตำแหน่งชิ้นเนื้อ)</label><select id="rb${n}_site" onchange="markDirty();recBxSite(${n})">${opt(REC_BX_SITES)}</select></div>
+    <div class="field" id="rb${n}_site_other_wrap" style="display:none"><label>Other site (ระบุ)</label><input type="text" id="rb${n}_site_other" oninput="markDirty()"></div>
+    <div class="field"><label>Pathology</label><input type="text" id="rb${n}_patho" oninput="markDirty()" placeholder="เช่น IDC"></div>
+    <div class="field"><label>ER</label>${sel('rb'+n+'_er',['','Positive','Negative','N/A'])}</div>
+    <div class="field"><label>PR</label>${sel('rb'+n+'_pr',['','Positive','Negative','N/A'])}</div>
+    <div class="field"><label>HER2</label>${sel('rb'+n+'_her2',['','0','1+','2+ (ISH negative)','2+ (ISH positive)','3+','N/A'])}</div>
+    <div class="field"><label>Ki-67 (%)</label><input type="text" id="rb${n}_ki67" inputmode="decimal" oninput="markDirty()" placeholder="%"></div>
+   </div>`;
+  box.appendChild(div);
+  if(d){
+    const set=(k,v)=>{const e=document.getElementById('rb'+n+'_'+k); if(e) e.value=v||'';};
+    set('site',d.site); set('site_other',d.site_other); set('patho',d.patho); set('er',d.er); set('pr',d.pr); set('her2',d.her2); set('ki67',d.ki67);
+    svDate('rb'+n+'_date',d.date||''); recBxSite(n);
+  }
+  recRenumber(); markDirty();
+}
+function recBxSite(n){ const w=document.getElementById('rb'+n+'_site_other_wrap'), s=document.getElementById('rb'+n+'_site'); if(w&&s) w.style.display=(s.value==='Other')?'':'none'; }
+function collectRecBx(){
+  const out=[]; document.querySelectorAll('#rec-bx-rows .rec-row').forEach(row=>{
+    const n=row.id.replace('rec-bx-','');
+    const g=k=>(document.getElementById('rb'+n+'_'+k)||{}).value||'';
+    const date=(document.getElementById('rb'+n+'_date')||{dataset:{}}).dataset.iso||'';
+    const o={date,site:g('site'),site_other:g('site')==='Other'?g('site_other'):'',patho:g('patho'),er:g('er'),pr:g('pr'),her2:g('her2'),ki67:g('ki67')};
+    if(Object.values(o).some(v=>String(v).trim()!=='')) out.push(o);
+  }); return out;
+}
+function restoreRecBx(list){ const b=document.getElementById('rec-bx-rows'); if(b) b.innerHTML=''; _recBxN=0; (list||[]).forEach(x=>addRecBx(x)); }
+function recBxList(r){
+  let L=[]; try{ L=r.rec_bx_json?JSON.parse(r.rec_bx_json):[]; }catch(e){}
+  if(!L.length && (r.rec_rebx_patho||r.rec_rebx_er||r.rec_rebx_pr||r.rec_rebx_her2||r.rec_rebx_ki67))
+    L=[{date:'',site:'',site_other:'',patho:r.rec_rebx_patho||'',er:r.rec_rebx_er||'',pr:r.rec_rebx_pr||'',her2:r.rec_rebx_her2||'',ki67:r.rec_rebx_ki67||''}];
+  return L;
+}
 // Systemic lines
 var _recLineN=0;
 var REC_RESP=['','SD','PR','CR','PD','N/A'];
@@ -8604,7 +8665,7 @@ function addRecLine(d){
 function recLineStop(n){ const w=document.getElementById('rl'+n+'_stop_other_wrap'); if(w) w.style.display=(document.getElementById('rl'+n+'_stop').value==='Other')?'':'none'; }
 function removeRecRow(id){ const e=document.getElementById(id); if(e) e.remove(); recRenumber(); markDirty(); }
 function recRenumber(){
-  ['rec-lines','rec-mol-rows'].forEach(c=>document.querySelectorAll('#'+c+' .rec-row .rec-idx').forEach((e,i)=>e.textContent=i+1));
+  ['rec-lines','rec-mol-rows','rec-bx-rows'].forEach(c=>document.querySelectorAll('#'+c+' .rec-row .rec-idx').forEach((e,i)=>e.textContent=i+1));
 }
 function collectRecLines(){
   const out=[]; document.querySelectorAll('#rec-lines .rec-row').forEach(row=>{
@@ -8624,7 +8685,11 @@ function recExportHeaders(){
     h['rec_l'+i+'_cycles']=`Line ${i} cycles`; h['rec_l'+i+'_comp']=`Line ${i} complications`; h['rec_l'+i+'_resp']=`Line ${i} max response`;
     h['rec_l'+i+'_stop']=`Line ${i} reason to stop`; h['rec_l'+i+'_prog']=`Line ${i} progression date`;
   }
-  h.rec_lines_extra='Lines beyond 5 (JSON)'; return h;
+  h.rec_lines_extra='Lines beyond 5 (JSON)';
+  for(let i=1;i<=3;i++){ const p='rec_bx'+i+'_';
+    h[p+'date']=`Re-bx ${i} date`; h[p+'site']=`Re-bx ${i} site`; h[p+'patho']=`Re-bx ${i} pathology`;
+    h[p+'er']=`Re-bx ${i} ER`; h[p+'pr']=`Re-bx ${i} PR`; h[p+'her2']=`Re-bx ${i} HER2`; h[p+'ki67']=`Re-bx ${i} Ki67`; }
+  h.rec_bx_extra='Re-biopsies beyond 3 (JSON)'; return h;
 }
 function recFlat(r){
   const o={}; let L=[], M=[];
@@ -8636,6 +8701,12 @@ function recFlat(r){
     o['rec_l'+i+'_stop']=(x.stop==='Other'&&x.stop_other)?('Other: '+x.stop_other):(x.stop||''); });
   if(L.length>5) o.rec_lines_extra=JSON.stringify(L.slice(5));
   o.rec_mol_summary=M.map(m=>`${m.date||''} ${m.result||''}`.trim()).join('; ');
+  const B=recBxList(r);
+  B.slice(0,3).forEach((x,k)=>{ const p='rec_bx'+(k+1)+'_';
+    o[p+'date']=x.date||''; o[p+'site']=(x.site==='Other'&&x.site_other)?('Other: '+x.site_other):(x.site||'');
+    o[p+'patho']=x.patho||''; o[p+'er']=x.er||''; o[p+'pr']=x.pr||''; o[p+'her2']=x.her2||''; o[p+'ki67']=x.ki67||''; });
+  if(B.length>3) o.rec_bx_extra=JSON.stringify(B.slice(3));
+  o.fu_source=(r.fu_source==='Other'&&r.fu_source_other)?('Other: '+r.fu_source_other):(r.fu_source||'');
   return o;
 }
 document.getElementById('tx_subbar') && showTxSub('surg');
