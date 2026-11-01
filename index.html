@@ -686,9 +686,10 @@
   </div>
   <div class="header-spacer"></div>
   <button class="btn-new" onclick="newRecord()">+ ผู้ป่วยใหม่</button>
-  <span id="storage-badge" class="storage-badge storage-warn" title="สถานะการเชื่อมต่อ Google Sheets">⚙️ ยังไม่ได้เชื่อมต่อ</span>
+  <span id="storage-badge" class="storage-badge storage-warn" title="สถานะการเชื่อมต่อ Google Sheets — แตะเพื่อทดสอบการเชื่อมต่อ" onclick="connectionTest()" style="cursor:pointer">⚙️ ยังไม่ได้เชื่อมต่อ</span>
   <button class="btn-new" onclick="setupURL()" title="ตั้งค่า URL และรหัสผ่านของ Google Sheets (ทำครั้งเดียวต่อเครื่อง)" style="font-size:11px;padding:6px 12px">⚙️ เชื่อมต่อ</button>
   <button class="btn-new" onclick="syncNow()" title="ดึงข้อมูลล่าสุดจาก Google Sheets" style="font-size:11px;padding:6px 12px">↻ Sync</button>
+  <button class="btn-new" onclick="connectionTest()" title="ทดสอบการเชื่อมต่อ Google Sheets และบอกสาเหตุ" style="font-size:11px;padding:6px 12px">🔍 ทดสอบ</button>
   <button class="btn-new" onclick="backupJSON()" title="สำรองข้อมูลเป็น JSON file" style="font-size:12px">💾 Backup</button>
   <label class="btn-new" title="นำเข้าข้อมูลจาก JSON backup" style="font-size:12px;cursor:pointer">
     📂 Restore
@@ -7576,7 +7577,7 @@ function saveRecord() {
     saveToSheets(rec).then(ok => {
       isOnline = ok;
       setBadge(ok?'ok':'warn', ok?`⬤ ออนไลน์ — ${records.length} ผู้ป่วย`:'⚠️ บันทึกในเครื่องแล้ว (Sheets ไม่ตอบ)');
-      showToast(ok?'✅ บันทึกลง Google Sheets แล้ว':'💾 บันทึกในเครื่องแล้ว — กด ↻ Sync เมื่อออนไลน์', ok?undefined:'var(--gold)');
+      showToast(ok?'✅ บันทึกลง Google Sheets แล้ว':'💾 บันทึกในเครื่องแล้ว — กด 🔍 ทดสอบ เพื่อดูสาเหตุ แล้วกด ↻ Sync', ok?undefined:'var(--gold)');
     });
   } else {
     showToast('✅ บันทึกในเครื่องแล้ว (ยังไม่เชื่อมต่อ Sheets)');
@@ -8339,7 +8340,7 @@ function renderDashboard() {
 }
 
 
-var APP_VERSION='v2.2 · 2026-11-01';
+var APP_VERSION='v2.3 · 2026-11-01';
 (function(){const e=document.getElementById('app_ver'); if(e) e.textContent=APP_VERSION;})();
 // Floating Save button: visible on every tab except Dashboard; turns amber while there are unsaved changes
 function floatSaveRefresh(){
@@ -8351,6 +8352,79 @@ function floatSaveRefresh(){
 }
 setInterval(floatSaveRefresh,400);
 document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='s'){ e.preventDefault(); const act=document.querySelector('.tab-panel.active'); if(act&&act.id!=='panel0') saveRecord(); } });
+// ═══════════════ CONNECTION TEST (v2.3) ═══════════════
+// Checks the link to Google step by step and says the likely cause in plain words.
+// The passcode is sent in the request body only, never in the address, and is never put in the report.
+function _fetchT(url,opts,ms){ const c=new AbortController(); const t=setTimeout(()=>c.abort(),ms||15000);
+  return fetch(url,{...opts,signal:c.signal}).finally(()=>clearTimeout(t)); }
+function _maskUrl(u){ return u? (u.slice(0,38)+'…(' +u.length+' chars)…'+u.slice(-5)) : '(none)'; }
+async function connectionTest(){
+  const old=document.getElementById('conn_dlg'); if(old) old.remove();
+  const d=document.createElement('div'); d.id='conn_dlg';
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML='<div style="background:var(--surface,#161b22);color:var(--text);border:1px solid var(--border2);border-radius:12px;max-width:620px;width:100%;max-height:88vh;overflow:auto;padding:18px;font-size:13px;line-height:1.55">'
+   +'<div style="font-size:15px;font-weight:700;margin-bottom:10px">🔍 ทดสอบการเชื่อมต่อ Google Sheets</div><div id="conn_steps"></div>'
+   +'<div id="conn_verdict" style="margin-top:12px;padding:10px 12px;border-radius:8px;border:1px solid var(--border2);display:none"></div>'
+   +'<div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">'
+   +'<button type="button" id="conn_copy" style="display:none">📋 คัดลอกผลทดสอบ (ส่งให้ผู้ดูแล)</button>'
+   +'<button type="button" onclick="document.getElementById(\'conn_dlg\').remove()">ปิด</button></div></div>';
+  document.body.appendChild(d);
+  const box=document.getElementById('conn_steps'), report=[];
+  const add=(name)=>{ const row=document.createElement('div'); row.style.cssText='display:flex;gap:8px;margin:4px 0';
+    row.innerHTML='<span style="width:22px">⏳</span><span style="flex:1"><b>'+name+'</b><div class="cs_d" style="color:var(--text3);font-size:12px"></div></span>'; box.appendChild(row);
+    return (ok,detail)=>{ row.firstChild.textContent=ok===true?'✅':ok===false?'❌':'➖'; row.querySelector('.cs_d').textContent=detail||''; }; };
+  const url=(typeof APPS_SCRIPT_URL!=='undefined'&&APPS_SCRIPT_URL)||'';
+  report.push('BCA connection test '+(typeof APP_VERSION!=='undefined'?APP_VERSION:'')+' | '+new Date().toISOString());
+  report.push('Device: '+navigator.userAgent.slice(0,140)); report.push('Browser online flag: '+navigator.onLine+' | Address: '+_maskUrl(url));
+  let verdict='', bad=true;
+  const fin=(msg,good)=>{ verdict=msg; bad=!good; };
+  // 1 address
+  let s=add('1) ตรวจที่อยู่ (Web App URL)'); 
+  if(!url){ s(false,'ยังไม่ได้ตั้งค่า'); fin('ยังไม่ได้ตั้งค่า — กดปุ่ม ⚙️ เชื่อมต่อ แล้วใส่ที่อยู่และรหัสผ่าน'); report.push('1 address: missing'); }
+  else if(/\/dev$/.test(url)){ s(false,'ลงท้ายด้วย /dev'); fin('ที่อยู่นี้เป็นที่อยู่ "ทดสอบ" (/dev) ใช้กับคนอื่นไม่ได้ — ใน Apps Script ให้คัดลอก Web app URL ที่ลงท้ายด้วย /exec แล้วตั้งค่าใหม่'); report.push('1 address: /dev'); }
+  else if(!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(url)){ s(false,'รูปแบบไม่ถูกต้อง'); fin('รูปแบบที่อยู่ไม่ถูกต้อง — ต้องขึ้นต้น https://script.google.com/macros/s/ และลงท้าย /exec (อาจคัดลอกไม่ครบ)'); report.push('1 address: bad format'); }
+  else { s(true,'รูปแบบถูกต้อง'); report.push('1 address: ok');
+    // 2 internet
+    s=add('2) อินเทอร์เน็ตของอุปกรณ์');
+    if(navigator.onLine===false){ s(false,'อุปกรณ์แจ้งว่าออฟไลน์'); fin('อุปกรณ์ไม่ได้ต่ออินเทอร์เน็ต — ตรวจ Wi-Fi / ข้อมูลมือถือ'); report.push('2 internet: offline'); }
+    else { s(true,'ออนไลน์'); report.push('2 internet: ok');
+      // 3 reach Google (no-cors: succeeds whenever the network can reach Google, even if the answer is unreadable)
+      s=add('3) ติดต่อเซิร์ฟเวอร์ Google ได้ไหม'); let t0=performance.now(), reach=false, r3='';
+      try{ await _fetchT(url+'?action=ping&t='+Date.now(),{mode:'no-cors',redirect:'follow'},15000); reach=true; }catch(e){ r3=(e.name==='AbortError'?'timeout':e.name+': '+e.message); }
+      const ms3=Math.round(performance.now()-t0);
+      if(!reach){ s(false,(r3.includes('timeout')?'ไม่ตอบใน 15 วินาที':'ติดต่อไม่ได้')+' ('+ms3+' ms)'); report.push('3 reach: FAIL '+r3+' '+ms3+'ms');
+        fin('ติดต่อ Google ไม่ได้ — เครือข่ายอาจบล็อก (Wi-Fi โรงพยาบาล, VPN, iCloud Private Relay, ตัวบล็อกโฆษณา) ลองใช้ข้อมูลมือถือ หรือปิด VPN/Private Relay แล้วทดสอบใหม่'); }
+      else { s(true,'ติดต่อได้ ('+ms3+' ms)'); report.push('3 reach: ok '+ms3+'ms');
+        // 4 readable answer
+        s=add('4) อ่านคำตอบจากสคริปต์ได้ไหม'); let j=null, kind='';
+        try{ const res=await _fetchT(url+'?action=ping&t='+Date.now(),{redirect:'follow'},15000); const txt=await res.text();
+          try{ j=JSON.parse(txt.trim().replace(/^﻿/,'')); }catch(e){ kind='html'; report.push('4 body starts: '+txt.slice(0,60).replace(/\s+/g,' ')); } }
+        catch(e){ kind=e.name==='AbortError'?'timeout':'blocked'; report.push('4 error: '+e.name+': '+e.message); }
+        if(kind==='blocked'){ s(false,'ติดต่อได้ แต่เบราว์เซอร์ไม่ยอมให้อ่านคำตอบ'); report.push('4 read: BLOCKED');
+          fin('ติดต่อ Google ได้ แต่อ่านคำตอบไม่ได้ — สาเหตุที่พบบ่อยที่สุดคือสคริปต์ไม่ได้ตั้ง "Who has access = Anyone" (Google ส่งหน้า Sign-in มาแทน) หรือที่อยู่มาจาก deployment ที่ถูกลบ\nวิธีแก้: Apps Script → Deploy → Manage deployments → ไอคอนดินสอ → Who has access: Anyone → Version: New version → Deploy แล้วทดสอบอีกครั้ง'); }
+        else if(kind==='timeout'){ s(false,'ไม่ตอบใน 15 วินาที'); fin('สคริปต์ตอบช้ามาก — ลองอีกครั้ง ถ้ายังช้าให้แจ้งผู้ดูแล'); report.push('4 read: timeout'); }
+        else if(kind==='html'){ s(false,'ได้หน้าเว็บแทนข้อมูล'); report.push('4 read: HTML page');
+          fin('ได้ "หน้าเว็บ" กลับมาแทนข้อมูล — มักเป็นหน้า Sign-in ของ Google หรือหน้า error: ตรวจ "Who has access = Anyone" และตรวจว่าที่อยู่ถูก deployment ล่าสุด'); }
+        else { s(true,'สคริปต์ตอบ: '+(j.message||j.status||'ok')); report.push('4 read: ok '+JSON.stringify(j).slice(0,80));
+          // 5 passcode
+          s=add('5) รหัสผ่าน (Passcode)'); let pass=false, msg5='';
+          try{ await _post({action:'check'},20000); pass=true; }catch(e){ msg5=String(e.message||e); if(/unknown action/i.test(msg5)) pass=true; }
+          if(!pass){ s(false,msg5.slice(0,80)); report.push('5 passcode: FAIL '+msg5.slice(0,80));
+            fin(/CHANGE-ME|not set/i.test(msg5)?'ใน Apps Script รหัสผ่านยังเป็น CHANGE-ME — แก้บรรทัด PASSCODE แล้ว Deploy (New version)':'รหัสผ่านไม่ตรงกับที่ตั้งไว้ใน Apps Script — กด ⚙️ เชื่อมต่อ แล้วใส่รหัสใหม่'); }
+          else { s(true,'รหัสผ่านถูกต้อง'); report.push('5 passcode: ok');
+            // 6 load data
+            s=add('6) โหลดข้อมูลผู้ป่วย'); t0=performance.now();
+            try{ const data=await _post({action:'getAll'},40000); const ms=Math.round(performance.now()-t0), kb=Math.round(JSON.stringify(data).length/1024);
+              s(true,(data.records||[]).length+' ราย · '+(ms/1000).toFixed(1)+' วินาที · '+kb+' KB'); report.push('6 load: ok '+(data.records||[]).length+' records '+ms+'ms '+kb+'KB');
+              fin('✅ เชื่อมต่อปกติ — ระบบพร้อมใช้งาน (กด ↻ Sync เพื่อดึงข้อมูลล่าสุด)',true); }
+            catch(e){ s(false,String(e.message).slice(0,80)); report.push('6 load: FAIL '+e.message); fin('โหลดข้อมูลไม่สำเร็จ: '+e.message+' — ลองอีกครั้ง'); } } } } } }
+  const v=document.getElementById('conn_verdict'); v.style.display=''; v.style.whiteSpace='pre-line';
+  v.style.borderColor=bad?'var(--accent)':'var(--teal)'; v.textContent=(bad?'สาเหตุที่น่าจะเป็น: ':'')+verdict;
+  report.push('Result: '+verdict.replace(/\n/g,' '));
+  const cb=document.getElementById('conn_copy'); if(cb){ cb.style.display=''; cb.onclick=()=>{ const t=report.join('\n');
+    (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(()=>showToast('📋 คัดลอกแล้ว'),()=>{ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');showToast('📋 คัดลอกแล้ว');}catch(e){} ta.remove(); }); }; }
+  window._lastConnReport=report.join('\n');
+}
 // ═══════════════ PHASE 3 — COMPLETENESS FLAGS ═══════════════
 // Edit the lists below to change what counts as "complete". Nothing here changes saved data.
 // red = a date that KPI / survival needs.  amber = any other missing item.
