@@ -3776,7 +3776,7 @@
     <div class="tab-panel" id="panel6">
       <h2 class="section-title">Recurrent / Metastatic Disease</h2>
       <p class="section-subtitle">กลับเป็นซ้ำ หรือแพร่กระจาย — ผู้ป่วยบางรายเกิดหลังวินิจฉัยหลายเดือน–หลายปี จึงแสดงแท็บนี้ตลอด · ถ้าไม่มีให้เว้นว่างได้</p>
-      <details class="kpi-help"><summary>ⓘ นิยามที่ใช้ในแท็บนี้ (Data dictionary · ร่าง)</summary><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Recurrence · กลับเป็นซ้ำ</div><div style="margin-top:3px">มะเร็งเต้านมเดิมกลับมาหลังการรักษาด้วยการผ่าตัด (มีช่วงปลอดโรคมาก่อน) ยืนยันด้วยชิ้นเนื้อ/cytology หรือภาพถ่ายที่ชัดเจนและแพทย์สรุปไว้ในเวชระเบียน</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Date of recurrence · วันที่กลับเป็นซ้ำ</div><div style="margin-top:3px">วันที่ของภาพถ่ายหรือชิ้นเนื้อครั้งแรกที่พบรอยโรค ซึ่งต่อมายืนยันว่าเป็นการกลับเป็นซ้ำ (ใช้วันที่เก่าที่สุด) · ไม่ใช่วันเริ่มมีอาการ และไม่ใช่วันเริ่มรักษา · วันนี้ใช้คำนวณ DFS</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">ไม่นับเป็น recurrence</div><div style="margin-top:3px">① tumour marker (CA 15-3, CEA) สูงขึ้นอย่างเดียว ไม่มีภาพหรือชิ้นเนื้อรองรับ → บันทึกในตาราง tumour marker ② มะเร็งเต้านมข้างตรงข้ามที่เป็นมะเร็งใหม่ (new primary) → บันทึกใน Remarks ③ ผู้ป่วยที่แพร่กระจายตั้งแต่วินิจฉัย (de novo)</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Pattern · รูปแบบ</div><div style="margin-top:3px">Local = เต้านมข้างเดิม / ผนังทรวงอก / แผลผ่าตัด · Regional = ต่อมน้ำเหลืองข้างเดียวกัน (รักแร้, supraclavicular, internal mammary) · Distant = อวัยวะอื่น · ติ๊กได้หลายช่องถ้าพบพร้อมกัน</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">ข้อที่ทีมยังต้องตกลงกัน</div><div style="margin-top:3px">(1) ใช้วันตรวจภาพ หรือวันออกผลชิ้นเนื้อ เป็นวัน recurrence · (2) ต่อมน้ำเหลืองข้างตรงข้ามนับเป็น Regional หรือ Distant · (3) ถ้าตกลงแล้ว บอกผู้พัฒนาเพื่อแก้ข้อความในกล่องนี้</div></div><div style="margin-top:8px;color:var(--text3)">ร่างกติกาของ registry — ทีมควรยืนยันร่วมกันก่อนใช้ทำวิจัย (ไม่ใช่คำอ้างอิงจากวารสาร)</div></details>
+      <details class="kpi-help"><summary>ⓘ นิยามที่ใช้ในแท็บนี้ (Data dictionary · ร่าง)</summary><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Recurrence · กลับเป็นซ้ำ</div><div style="margin-top:3px">มะเร็งเต้านมเดิมกลับมาหลังการรักษาด้วยการผ่าตัด (มีช่วงปลอดโรคมาก่อน) ยืนยันด้วยชิ้นเนื้อ/cytology หรือภาพถ่ายที่ชัดเจนและแพทย์สรุปไว้ในเวชระเบียน</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Date of recurrence · วันที่กลับเป็นซ้ำ</div><div style="margin-top:3px">วันที่ของภาพถ่ายหรือชิ้นเนื้อครั้งแรกที่พบรอยโรค ซึ่งต่อมายืนยันว่าเป็นการกลับเป็นซ้ำ (ใช้วันที่เก่าที่สุด) · ไม่ใช่วันเริ่มมีอาการ และไม่ใช่วันเริ่มรักษา · วันนี้ใช้คำนวณ DFS</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">ไม่นับเป็น recurrence</div><div style="margin-top:3px">① tumour marker (CA 15-3, CEA) สูงขึ้นอย่างเดียว ไม่มีภาพหรือชิ้นเนื้อรองรับ → บันทึกในตาราง tumour marker ② มะเร็งเต้านมข้างตรงข้ามที่เป็นมะเร็งใหม่ (new primary) → บันทึกใน Remarks ③ ผู้ป่วยที่แพร่กระจายตั้งแต่วินิจฉัย (de novo)</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">Pattern · รูปแบบ</div><div style="margin-top:3px">Local = เต้านมข้างเดิม / ผนังทรวงอก / แผลผ่าตัด · Regional = ต่อมน้ำเหลืองข้างเดียวกัน (รักแร้, supraclavicular, internal mammary) · Distant = อวัยวะอื่น · ติ๊กได้หลายช่องถ้าพบพร้อมกัน</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">PFS ของแต่ละ line (ระบบคำนวณให้)</div><div style="margin-top:3px">จำนวนเดือนตั้งแต่ <b>วันที่ให้ยาครั้งแรกของ line นั้น</b> ถึง <b>วันที่ progression ของ line นั้น</b> = จำนวนวัน ÷ 30.4375 (ทศนิยม 1 ตำแหน่ง) · ถ้ายังไม่มีวันที่ progression จะแสดง "—" (ยังไม่นับ) · ตอนนี้ไม่รวมการเสียชีวิตเป็นเหตุการณ์</div></div><div class="kpi-help-item"><div style="font-weight:600;color:var(--text)">ข้อที่ทีมยังต้องตกลงกัน</div><div style="margin-top:3px">(1) ใช้วันตรวจภาพ หรือวันออกผลชิ้นเนื้อ เป็นวัน recurrence · (2) ต่อมน้ำเหลืองข้างตรงข้ามนับเป็น Regional หรือ Distant · (3) ถ้าตกลงแล้ว บอกผู้พัฒนาเพื่อแก้ข้อความในกล่องนี้</div></div><div style="margin-top:8px;color:var(--text3)">ร่างกติกาของ registry — ทีมควรยืนยันร่วมกันก่อนใช้ทำวิจัย (ไม่ใช่คำอ้างอิงจากวารสาร)</div></details>
 
       <div class="subsection" style="border-left:3px solid var(--accent)">
         <div class="subsection-title">Basic information</div>
@@ -8355,7 +8355,7 @@ function renderDashboard() {
 }
 
 
-var APP_VERSION='v2.4 · 2026-11-01';
+var APP_VERSION='v2.5 · 2026-11-07';
 (function(){const e=document.getElementById('app_ver'); if(e) e.textContent=APP_VERSION;})();
 // Floating Save button: visible on every tab except Dashboard; turns amber while there are unsaved changes
 function floatSaveRefresh(){
@@ -8565,8 +8565,24 @@ function updateRecLegacy(){
 function recRefreshUI(){ recPatternUpdate(); recSiteToggle(); recRebxToggle(); recMolToggle(); fuSrcToggle(); updateRecLegacy(); _loadingRecUI=false; }
 var _loadingRecUI=false;
 // date helper for rows
-function _recDateField(id,label){
-  return `<div class="field"><label>${label}</label><input type="text" id="${id}" class="date-input" placeholder="วว/ดด/พ.ศ." maxlength="10" autocomplete="off" oninput="onThaiDateInput(this, ()=>{ markDirty() })"></div>`;
+function _recDateField(id,label,cb){
+  return `<div class="field"><label>${label}</label><input type="text" id="${id}" class="date-input" placeholder="วว/ดด/พ.ศ." maxlength="10" autocomplete="off" oninput="onThaiDateInput(this, ()=>{ markDirty() });${cb||''}"></div>`;
+}
+// PFS = first cycle date -> progression date, in decimal months (days / 30.4375). Returns number, null (not enough data) or 'err' (progression before start)
+function pfsMonths(startIso, progIso){
+  if(!startIso || !progIso) return null;
+  const a=Date.parse(startIso+'T00:00:00Z'), b=Date.parse(progIso+'T00:00:00Z');
+  if(isNaN(a)||isNaN(b)) return null;
+  if(b<a) return 'err';
+  return Math.round((b-a)/86400000/30.4375*10)/10;
+}
+function recPfs(n){
+  const out=document.getElementById('rl'+n+'_pfs'); if(!out) return;
+  const iso=k=>(document.getElementById('rl'+n+'_'+k)||{dataset:{}}).dataset.iso||'';
+  const m=pfsMonths(iso('start'),iso('prog'));
+  if(m==='err'){ out.textContent='⚠️ วันที่ progression ก่อนวันเริ่ม — ตรวจสอบ'; out.style.color='var(--accent)'; }
+  else if(m===null){ out.textContent='—'; out.style.color='var(--text3)'; }
+  else { out.textContent=m.toFixed(1)+' months'; out.style.color='var(--teal)'; }
 }
 // Molecular rows
 var _recMolN=0;
@@ -8644,11 +8660,12 @@ function addRecLine(d){
   div.innerHTML=`<div class="rec-row-head"><span>Line <span class="rec-idx"></span></span><button type="button" class="rec-del" onclick="removeRecRow('rec-line-${n}')">✕ ลบ line นี้</button></div>
    <div class="form-grid g3">
     <div class="field"><label>Regimen</label><input type="text" id="rl${n}_regimen" oninput="markDirty()" placeholder="เช่น Letrozole + Palbociclib"></div>
-    ${_recDateField('rl'+n+'_start','First cycle date')}
+    ${_recDateField('rl'+n+'_start','First cycle date','recPfs('+n+')')}
     ${_recDateField('rl'+n+'_end','Last cycle date')}
     <div class="field"><label>Total cycles</label><input type="number" min="0" id="rl${n}_cycles" oninput="markDirty()"></div>
     <div class="field"><label>Maximum response</label><select id="rl${n}_resp" onchange="markDirty()">${opt(REC_RESP)}</select></div>
-    ${_recDateField('rl'+n+'_prog','Date of progression (from this regimen)')}
+    ${_recDateField('rl'+n+'_prog','Date of progression (from this regimen)','recPfs('+n+')')}
+    <div class="field"><label>PFS of this line (first cycle → progression)</label><div id="rl${n}_pfs" style="padding:9px 0;font-weight:600">—</div></div>
     <div class="field"><label>Reason to stop</label><select id="rl${n}_stop" onchange="markDirty();recLineStop(${n})">${opt(REC_STOP)}</select></div>
     <div class="field" id="rl${n}_stop_other_wrap" style="display:none"><label>Other (ระบุ)</label><input type="text" id="rl${n}_stop_other" oninput="markDirty()"></div>
     <div class="field" style="grid-column:1/-1"><label>Complications (free text)</label><input type="text" id="rl${n}_comp" oninput="markDirty()"></div>
@@ -8658,7 +8675,7 @@ function addRecLine(d){
     const set=(k,v)=>{const e=document.getElementById('rl'+n+'_'+k); if(e) e.value=v||'';};
     set('regimen',d.regimen); set('cycles',d.cycles); set('resp',d.resp); set('stop',d.stop); set('stop_other',d.stop_other); set('comp',d.comp);
     svDate('rl'+n+'_start',d.start||''); svDate('rl'+n+'_end',d.end||''); svDate('rl'+n+'_prog',d.prog||'');
-    recLineStop(n);
+    recLineStop(n); recPfs(n);
   }
   recRenumber(); markDirty();
 }
@@ -8683,7 +8700,7 @@ function recExportHeaders(){
   for(let i=1;i<=5;i++){
     h['rec_l'+i+'_regimen']=`Line ${i} regimen`; h['rec_l'+i+'_start']=`Line ${i} first cycle`; h['rec_l'+i+'_end']=`Line ${i} last cycle`;
     h['rec_l'+i+'_cycles']=`Line ${i} cycles`; h['rec_l'+i+'_comp']=`Line ${i} complications`; h['rec_l'+i+'_resp']=`Line ${i} max response`;
-    h['rec_l'+i+'_stop']=`Line ${i} reason to stop`; h['rec_l'+i+'_prog']=`Line ${i} progression date`;
+    h['rec_l'+i+'_stop']=`Line ${i} reason to stop`; h['rec_l'+i+'_prog']=`Line ${i} progression date`; h['rec_l'+i+'_pfs']=`Line ${i} PFS (months)`;
   }
   h.rec_lines_extra='Lines beyond 5 (JSON)';
   for(let i=1;i<=3;i++){ const p='rec_bx'+i+'_';
@@ -8698,6 +8715,7 @@ function recFlat(r){
   L.slice(0,5).forEach((x,k)=>{ const i=k+1;
     o['rec_l'+i+'_regimen']=x.regimen||''; o['rec_l'+i+'_start']=x.start||''; o['rec_l'+i+'_end']=x.end||''; o['rec_l'+i+'_cycles']=x.cycles||'';
     o['rec_l'+i+'_comp']=x.comp||''; o['rec_l'+i+'_resp']=x.resp||''; o['rec_l'+i+'_prog']=x.prog||'';
+    { const m=pfsMonths(x.start,x.prog); o['rec_l'+i+'_pfs']=(typeof m==='number')?m:''; }
     o['rec_l'+i+'_stop']=(x.stop==='Other'&&x.stop_other)?('Other: '+x.stop_other):(x.stop||''); });
   if(L.length>5) o.rec_lines_extra=JSON.stringify(L.slice(5));
   o.rec_mol_summary=M.map(m=>`${m.date||''} ${m.result||''}`.trim()).join('; ');
