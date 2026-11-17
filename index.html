@@ -8355,7 +8355,7 @@ function renderDashboard() {
 }
 
 
-var APP_VERSION='v2.5 · 2026-11-07';
+var APP_VERSION='v2.6 · 2026-11-16';
 (function(){const e=document.getElementById('app_ver'); if(e) e.textContent=APP_VERSION;})();
 // Floating Save button: visible on every tab except Dashboard; turns amber while there are unsaved changes
 function floatSaveRefresh(){
@@ -8453,6 +8453,13 @@ function flagEval(r){
   const sess=_fparse(r.cmt_sessions_json).filter(x=>x.aim||x.regimen||x.date_start||x.status);
   const neo=sess.some(x=>/neo/i.test(x.aim||''));
   const surg=_fv(r,'date_or'), rt=r.radiation==='yes', endo=r.endocrine==='yes';
+  // v2.6: data now lives in per-lesion panels (bx_panels_json / sp_panels_json); the old top-level fields stay empty
+  const bxP=_fparse(r.bx_panels_json), spP=_fparse(r.sp_panels_json), stgP=_fparse(r.stg_panels_json);
+  const pHas=(P,pk)=>P.some(p=>p&&String(p[pk]==null?'':p[pk]).trim()!=='');
+  const MP=(k,label,P,pk,red)=>(_fv(r,k)||pHas(P,pk))?null:{label,red:!!red};
+  const src=r.final_ihc_source||'';
+  const MF=(k,label)=>{ const fin=String(r['final_'+k]||'').trim();
+    return (_fv(r,k)||(fin!==''&&fin!=='—')||(src!=='biopsy'&&pHas(spP,'sp_'+k))||(src!=='surgical'&&pHas(bxP,'bx_'+k)))?null:{label}; };
   const T={};
   // 1 Patient data
   T[1]={started:any(['hn','firstname','lastname']),items:[M('hn','HN'),M('firstname','ชื่อ'),M('lastname','นามสกุล'),
@@ -8463,17 +8470,17 @@ function flagEval(r){
     items:[M('ecog','ECOG'),M('date_first_visit','วันที่มาพบแพทย์ครั้งแรก'),M('side','ข้างที่เป็น'),M('family_hx','ประวัติครอบครัว'),
     M('smoking','สูบบุหรี่'),M('alcohol','ดื่มแอลกอฮอล์'),M('menstruation','ประจำเดือน'),M('pe_tumor_size','ขนาดก้อน (PE)')]};
   // 3 Investigation
-  T[3]={started:any(['date_imaging','mmg_result','us_result','bx_date','bx_subtype','bx_er','met_overall']),
+  T[3]={started:(any(['date_imaging','mmg_result','us_result','bx_date','bx_subtype','bx_er','met_overall'])||pHas(bxP,'bx_date')||pHas(bxP,'bx_subtype')||pHas(bxP,'bx_er')),
     items:[M('date_imaging','วันที่ตรวจภาพถ่าย'),(_fv(r,'mmg_result')||_fv(r,'us_result'))?null:{label:'ผลภาพถ่าย (MMG/US)'},
-    M('bx_date','วันที่ biopsy (KPI 5/6)',true),M('bx_patho_date','วันที่ออกผล biopsy (KPI 5)',true),
-    M('bx_subtype','Biopsy: histology'),M('bx_er','Biopsy: ER'),M('bx_pr','Biopsy: PR'),M('bx_her2','Biopsy: HER2'),M('bx_ki67','Biopsy: Ki-67'),
+    MP('bx_date','วันที่ biopsy (KPI 5/6)',bxP,'bx_date',true),MP('bx_patho_date','วันที่ออกผล biopsy (KPI 5)',bxP,'bx_patho_date',true),
+    MP('bx_subtype','Biopsy: histology',bxP,'bx_subtype'),MP('bx_er','Biopsy: ER',bxP,'bx_er'),MP('bx_pr','Biopsy: PR',bxP,'bx_pr'),MP('bx_her2','Biopsy: HER2',bxP,'bx_her2'),MP('bx_ki67','Biopsy: Ki-67',bxP,'bx_ki67'),
     M('met_overall','สรุปการตรวจ metastasis')]};
   // 4 Treatment — a section is checked only after it applies
   const it4=[];
   if(surg){
     it4.push(M('op_side','ผ่าตัด: ข้าง'),M('or_hospital','ผ่าตัด: โรงพยาบาล'),M('slnb_done','SLNB (ทำ/ไม่ทำ)'),
-      M('surg_patho_date','วันที่ผลพยาธิหลังผ่าตัด'),M('surg_subtype','Surg patho: histology'),M('surg_grade','Surg patho: grade'),
-      M('surg_tumor_size','Surg patho: ขนาด'),M('margin_status','Margin'));
+      M('surg_patho_date','วันที่ผลพยาธิหลังผ่าตัด'),MP('surg_subtype','Surg patho: histology',spP,'sp_subtype'),MP('surg_grade','Surg patho: grade',spP,'sp_grade'),
+      MP('surg_tumor_size','Surg patho: ขนาด',spP,'sp_size'),MP('margin_status','Margin',spP,'sp_margin'));
     if(neo) it4.push(M('pcr','pCR'));
     it4.push(M('radiation','ฉายรังสี (ใช่/ไม่)'),M('endocrine','Endocrine (ใช่/ไม่)'));
   }
@@ -8487,10 +8494,10 @@ function flagEval(r){
   if(endo) it4.push(M('endo_regimen','Endocrine: regimen'),M('date_endo','Endocrine: วันเริ่ม'));
   T[4]={started:surg||sess.length>0||rt||endo||any(['radiation','endocrine','surgery_aim']),items:it4};
   // 5 Staging
-  const it5=[M('date_dx','วันที่วินิจฉัย (KPI 2 / OS)',true),M('ct_stage','cT'),M('cn_stage','cN'),M('cm_stage','cM'),
-    M('stage_overall','Stage รวม (KPI 2)',true),M('er','Final ER'),M('pr','Final PR'),M('final_mol_subtype','Molecular subtype')];
-  if(surg) it5.push(...(neo?[M('ypt_stage','ypT'),M('ypn_stage','ypN'),M('ypm_stage','ypM')]:[M('pt_stage','pT'),M('pn_stage','pN'),M('pm_stage','pM')]));
-  T[5]={started:any(['date_dx','ct_stage','cn_stage','cm_stage','stage_overall','er','pr','final_mol_subtype','pt_stage','ypt_stage']),items:it5};
+  const it5=[M('date_dx','วันที่วินิจฉัย (KPI 2 / OS)',true),MP('ct_stage','cT',stgP,'stg_ct'),MP('cn_stage','cN',stgP,'stg_cn'),MP('cm_stage','cM',stgP,'stg_cm'),
+    M('stage_overall','Stage รวม (KPI 2)',true),MF('er','Final ER'),MF('pr','Final PR'),M('final_mol_subtype','Molecular subtype')];
+  if(surg) it5.push(...(neo?[MP('ypt_stage','ypT',stgP,'stg_ypt'),MP('ypn_stage','ypN',stgP,'stg_ypn'),MP('ypm_stage','ypM',stgP,'stg_ypm')]:[MP('pt_stage','pT',stgP,'stg_pt'),MP('pn_stage','pN',stgP,'stg_pn'),MP('pm_stage','pM',stgP,'stg_pm')]));
+  T[5]={started:(any(['date_dx','ct_stage','cn_stage','cm_stage','stage_overall','er','pr','final_mol_subtype','pt_stage','ypt_stage'])||pHas(stgP,'stg_ct')||pHas(stgP,'stg_pt')),items:it5};
   const out={tabs:{}}; let anyStarted=false, red=false, amber=false, greyOther=false;
   [1,2,3,4,5].forEach(n=>{ const t=T[n], miss=t.items.filter(Boolean);
     const rd=miss.filter(x=>x.red), am=miss.filter(x=>!x.red);
